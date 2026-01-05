@@ -1,3 +1,7 @@
 <Solution>
-  <Project Path="Messenger/Messenger.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="Application/Application.csproj" />
+  <Project Path="UserAPI/UserAPI.csproj" />
 </Solution>
