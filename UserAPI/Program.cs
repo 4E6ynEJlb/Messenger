@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http.Features;
+
 namespace UserAPI
 {
     public class Program
@@ -5,6 +7,16 @@ namespace UserAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024;
+            });
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
+                options.MemoryBufferThreshold = 1 * 1024 * 1024;
+            });
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

@@ -1,0 +1,167 @@
+﻿using Application.Models.Input;
+using Application.Models.Output;
+using Microsoft.AspNetCore.Mvc;
+
+namespace UserAPI.Controllers
+{
+    [Route("[controller]")]
+    [ApiController]
+    public class PersonalChatController : ControllerBase
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <returns>404 if is not belonging to current user</returns>
+        [ProducesResponseType(typeof(ChatShortInfo), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpGet("{chatId}")]
+        public async Task<IActionResult> GetChatShortInfo(Guid chatId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="messagesSelectOptions"></param>
+        /// <returns>404 if chat is not belonging to current user</returns>
+        [ProducesResponseType(typeof(Message[]), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("{chatId}/[action]")]
+        public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="messageId"></param>
+        /// <param name="messagesSelectOptions"></param>
+        /// <returns>404 if chat is not belonging to current user or message does not exist</returns>
+        [ProducesResponseType(typeof(Message), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId, MessagesSelectOptions messagesSelectOptions)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <returns>404 if chat is not belonging to current user</returns>
+        [ProducesResponseType(typeof(Guid), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetUserIdByChat(Guid chatId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// returns id of existing chat or creates a new one
+        /// </summary>
+        /// <param name="destinationUserId"></param>
+        /// <returns></returns>
+        [ProducesResponseType(typeof(Guid), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpGet("[action]")]
+        public async Task<IActionResult> OpenChatWithUser(Guid destinationUserId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sendingMessageBody"></param>
+        /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
+        [ProducesResponseType(typeof(Guid), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> SendMessage([FromForm]SendingMessageBody sendingMessageBody)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="messageText"></param>
+        /// <returns>404 if chat or message is not belonging to current user</returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> EditMessageText(UpdatingMessage messageText)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="messageId"></param>
+        /// <returns>404 if chat or message is not belonging to current user</returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpDelete("[action]")]
+        public async Task<IActionResult> DeleteMessage(Guid chatId, Guid messageId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="mediaLink"></param>
+        /// <returns>404 if chat or message is not belonging to current user</returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpDelete("[action]")]
+        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink)
+        {
+            return Ok();
+        }
+
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpDelete("[action]")]
+        public async Task<IActionResult> DeleteChat(Guid chatId)
+        {
+            return Ok();
+        }
+    }
+}
