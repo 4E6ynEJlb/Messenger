@@ -1,9 +1,11 @@
 ﻿using Application.Models.Input;
 using Application.Models.Output;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace UserAPI.Controllers
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class PersonalChatController : ControllerBase
@@ -45,7 +47,6 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
-        /// <param name="messagesSelectOptions"></param>
         /// <returns>404 if chat is not belonging to current user or message does not exist</returns>
         [ProducesResponseType(typeof(Message), 200)]
         [ProducesResponseType(400)]
@@ -53,7 +54,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId, MessagesSelectOptions messagesSelectOptions)
+        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId)
         {
             return Ok();
         }
@@ -75,10 +76,10 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// returns id of existing chat or creates a new one
+        /// 
         /// </summary>
         /// <param name="destinationUserId"></param>
-        /// <returns></returns>
+        /// <returns>returns id of existing chat or creates a new one</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -100,7 +101,22 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm]SendingMessageBody sendingMessageBody)
+        public async Task<IActionResult> SendMessage([FromForm]SendingMessageForm sendingMessageBody)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// call, when user is typing a message
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <returns></returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> Typing(Guid chatId)
         {
             return Ok();
         }
@@ -117,6 +133,36 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
         public async Task<IActionResult> EditMessageText(UpdatingMessage messageText)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> BlockUser(Guid userId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> UnblockUser(Guid userId)
         {
             return Ok();
         }

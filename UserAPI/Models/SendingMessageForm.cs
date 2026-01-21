@@ -2,7 +2,7 @@
 
 namespace Application.Models.Input
 {
-    public record SendingMessageBody : UpdatingMessage
+    public record SendingMessageForm : UpdatingMessage
     {
         public required Guid? ReplyTo { get; init; }
         public required ResendingMessagesOptions? ResendingMessages { get; init; }

@@ -1,10 +1,12 @@
 ﻿using Application.Models.Input;
 using Application.Models.Output;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
 
 namespace UserAPI.Controllers
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -71,13 +73,15 @@ namespace UserAPI.Controllers
         /// avatars of user by id; first is main
         /// </summary>
         /// <param name="userId"></param>
+        /// <param name="pageNumber">>0</param>
+        /// <param name="pageSize">>0</param>
         /// <returns>media links</returns>
         [ProducesResponseType(typeof(string[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetUserAvatars(Guid userId)
+        public async Task<IActionResult> GetUserAvatars(Guid userId, uint pageNumber, uint pageSize)
         {
             return Ok();
         }
@@ -99,7 +103,7 @@ namespace UserAPI.Controllers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="chatsSelectOptions">all options values >= 1</param>
+        /// <param name="pageOptions">all options values >= 1</param>
         /// <returns>part of chats list</returns>
         [ProducesResponseType(typeof(ChatShortInfo[]), 200)]
         [ProducesResponseType(400)]
@@ -107,7 +111,23 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> Chats(ChatsSelectOptions chatsSelectOptions)
+        public async Task<IActionResult> Chats(PageOptions pageOptions)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pageOptions">all options values >= 1</param>
+        /// <returns>part of chats list</returns>
+        [ProducesResponseType(typeof(User[]), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Companions(PageOptions pageOptions)
         {
             return Ok();
         }
