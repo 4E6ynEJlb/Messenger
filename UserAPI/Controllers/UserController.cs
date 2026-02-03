@@ -58,13 +58,14 @@ namespace UserAPI.Controllers
         /// <summary>
         /// avatars of current user; first is main
         /// </summary>
-        /// <returns>media links</returns>
+        /// <param name="pageOptions"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(string[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetCurrentUserAvatars()
+        public async Task<IActionResult> GetCurrentUserAvatars(PageOptions pageOptions)
         {
             return Ok();
         }
@@ -73,15 +74,14 @@ namespace UserAPI.Controllers
         /// avatars of user by id; first is main
         /// </summary>
         /// <param name="userId"></param>
-        /// <param name="pageNumber">>0</param>
-        /// <param name="pageSize">>0</param>
+        /// <param name="pageOptions"></param>
         /// <returns>media links</returns>
         [ProducesResponseType(typeof(string[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetUserAvatars(Guid userId, uint pageNumber, uint pageSize)
+        public async Task<IActionResult> GetUserAvatars(Guid userId, PageOptions pageOptions)
         {
             return Ok();
         }
