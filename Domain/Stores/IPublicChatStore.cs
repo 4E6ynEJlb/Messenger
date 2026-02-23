@@ -17,6 +17,13 @@ namespace Domain.Stores
         public Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string newText);
         public Task GiveMemberRoleAsync(Guid member, Guid chatId, Guid givingBy, EnPublicChatMemberRole newRole);
         public Task UpdateChatAsync(Guid chatId, Guid updatingBy, string? newName, bool? isSearchable, MediaFile? newAvatar);
-
+        public Task BanUserAsync(Guid chatId, Guid userId, Guid banningBy);///////////impl
+        public Task UnbanUserAsync(Guid chatId, Guid userId, Guid unbanningBy);///////////impl
+        public Task DeleteMessageAsync(Guid chatId, Guid messageId, Guid deletingBy);
+        public Task DeleteFileFromMessageAsync(Guid chatId, Guid messageId, Guid fileId, Guid deletingBy);
+        public Task LeaveChatAsync(Guid chatId, Guid userId);
+        public Task DeleteChatMemberAsync(Guid chatId, Guid memberId, Guid deletingBy);///////////rmk
+        public Task DeleteAndBanChatMemberAsync(Guid chatId, Guid memberId, Guid deletingBy);///////////impl
+        public Task DeleteChatAsync(Guid chatId, Guid deletingBy);
     }
 }

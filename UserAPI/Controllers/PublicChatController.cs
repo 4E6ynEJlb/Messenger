@@ -246,6 +246,22 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
+        public async Task<IActionResult> BanUser(Guid chatId, Guid userId)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="userId"></param>
+        /// <returns>403 if not owner or creator, 404 if not a member</returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpDelete("[action]")]
         public async Task<IActionResult> UnbanUser(Guid chatId, Guid userId)
         {
             return Ok();
