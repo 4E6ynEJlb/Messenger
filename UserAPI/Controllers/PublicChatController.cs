@@ -32,7 +32,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <returns>404 if is not belonging to current user</returns>
-        [ProducesResponseType(typeof(PublicChatShortInfo[]), 200)]
+        [ProducesResponseType(typeof(PublicChatShortInfo), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
@@ -204,6 +204,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="member"></param>
+        /// <param name="chatId"></param>
         /// <param name="role">must be lower than current user role</param>
         /// <returns>403 if current user is not owner or admin</returns>
         [ProducesResponseType(200)]
@@ -212,7 +213,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GiveMemberRole(Guid member, PublicChatMemberRole role)
+        public async Task<IActionResult> GiveMemberRole(Guid member, Guid chatId, PublicChatMemberRole role)
         {
             return Ok();
         }

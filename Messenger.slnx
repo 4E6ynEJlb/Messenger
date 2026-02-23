@@ -3,5 +3,6 @@
     <File Path=".editorconfig" />
   </Folder>
   <Project Path="Application/Application.csproj" />
+  <Project Path="Domain/Domain.csproj" Id="59d1402d-cb45-4456-bf43-9ffdca267e07" />
   <Project Path="UserAPI/UserAPI.csproj" />
 </Solution>
