@@ -32,7 +32,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <returns>404 if is not belonging to current user</returns>
-        [ProducesResponseType(typeof(PublicChatShortInfo[]), 200)]
+        [ProducesResponseType(typeof(PublicChatShortInfo), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
