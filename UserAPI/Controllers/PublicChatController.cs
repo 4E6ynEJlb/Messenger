@@ -212,7 +212,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GiveMemberRole(Guid member, PublicChatMemberRole role)
+        public async Task<IActionResult> GiveMemberRole(Guid member, Guid chatId, PublicChatMemberRole role)
         {
             return Ok();
         }
