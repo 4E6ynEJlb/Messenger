@@ -204,6 +204,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="member"></param>
+        /// <param name="chatId"></param>
         /// <param name="role">must be lower than current user role</param>
         /// <returns>403 if current user is not owner or admin</returns>
         [ProducesResponseType(200)]
@@ -230,6 +231,22 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
         public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] PublicChatOptionsForm updatePublicChatBody)
+        {
+            return Ok();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="userId"></param>
+        /// <returns>403 if not owner or creator, 404 if not a member</returns>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpDelete("[action]")]
+        public async Task<IActionResult> BanUser(Guid chatId, Guid userId)
         {
             return Ok();
         }
