@@ -143,7 +143,6 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> UpdateCredentials(UpdateCredentials updateCredentials)
         {
-            Response.AppendCredentials("credentials");
             return Ok();
         }
 
