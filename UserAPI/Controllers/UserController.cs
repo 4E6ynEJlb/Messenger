@@ -142,8 +142,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
         public async Task<IActionResult> UpdateCredentials(UpdateCredentials updateCredentials)
-        {
-            Response.AppendCredentials("credentials");
+        {            
             return Ok();
         }
 
@@ -206,7 +205,7 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> DeleteAccount(byte[] password)
         {
             Response.DeleteRefreshToken();
-            Response.DeleteCredentials();
+            Response.DeleteDeviceId();
             return Ok();
         }
     }

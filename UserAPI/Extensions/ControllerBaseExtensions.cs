@@ -11,13 +11,13 @@ namespace UserAPI.Extensions
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(expirationDays)
+                Expires = DateTimeOffset.UtcNow.AddHours(expirationDays)
             });
         }
 
-        public static void AppendCredentials(this HttpResponse response, string encryptedCredentials)
+        public static void AppendDeviceId(this HttpResponse response, string encryptedCredentials)
         {
-            response.Cookies.Append(CookiesKeys.CREDENTIALS, encryptedCredentials, new CookieOptions
+            response.Cookies.Append(CookiesKeys.DeviceId, encryptedCredentials, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
@@ -31,9 +31,9 @@ namespace UserAPI.Extensions
             return refreshToken;
         }
 
-        public static string? TryGetCredentials(this HttpRequest request)
+        public static string? TryGetDeviceId(this HttpRequest request)
         {
-            request.Cookies.TryGetValue(CookiesKeys.CREDENTIALS, out string? encryptedCredentials);
+            request.Cookies.TryGetValue(CookiesKeys.DeviceId, out string? encryptedCredentials);
             return encryptedCredentials;
         }
 
@@ -42,9 +42,9 @@ namespace UserAPI.Extensions
             response.Cookies.Delete(CookiesKeys.REFRESH_TOKEN);
         }
 
-        public static void DeleteCredentials(this HttpResponse response)
+        public static void DeleteDeviceId(this HttpResponse response)
         {
-            response.Cookies.Delete(CookiesKeys.CREDENTIALS);
+            response.Cookies.Delete(CookiesKeys.DeviceId);
         }
     }
 }

@@ -20,10 +20,9 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
         public async Task<IActionResult> Login(UserCredentials credentials, bool isRemembering)
-        {
+        {            
             if (isRemembering)
-                Response.AppendCredentials("credentials");
-            Response.AppendRefreshToken("token", 1);
+                Response.AppendRefreshToken("token", 1);
             return Ok();//jwt token
         }
 
@@ -40,8 +39,7 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> Register(RegisterUser registerUser, bool isRemembering)
         {
             if (isRemembering)
-                Response.AppendCredentials("credentials");
-            Response.AppendRefreshToken("token", 1);
+                Response.AppendRefreshToken("token", 1);
             return Ok();//jwt token
         }
 
@@ -59,23 +57,12 @@ namespace UserAPI.Controllers
             return Ok();//jwt token
         }
 
-        [ProducesResponseType(typeof(string), 200)]
-        [ProducesResponseType(401)]
-        [HttpPost("[action]")]
-        public async Task<IActionResult> AutoRelogin()
-        {
-            Request.TryGetCredentials();
-            Response.AppendRefreshToken("token", 1);
-            return Ok();//jwt token
-        }
-
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [HttpPost("[action]")]
         public async Task<IActionResult> Logout()
         {
             Response.DeleteRefreshToken();
-            Response.DeleteCredentials();
             return Ok();
         }
     }
