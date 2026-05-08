@@ -2,7 +2,7 @@
 
 namespace UserAPI.Models
 {
-    public record PublicChatOptionsForm
+    public record CreatePublicChatForm
     {
         public required string ChatName { get; init; }
         public required bool Searchable { get; init; }

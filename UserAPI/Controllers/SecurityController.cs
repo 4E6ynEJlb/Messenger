@@ -1,10 +1,11 @@
 ﻿using Application.Models.Internal.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
     public class SecurityController : ControllerBase
@@ -34,7 +35,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportBot(Guid guid, string? comment)
+        public async Task<IActionResult> ReportBot(Guid botId, string? comment)
         {
             return Ok();
         }
@@ -44,7 +45,18 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportPublicChat(Guid chatId)
+        public async Task<IActionResult> ReportPublicChat(Guid chatId, string? comment)
+        {
+            return Ok();
+        }
+
+        [Authorize(Policy = Policies.BANNED_USER_POLICY)]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPost("[action]")]
+        public async Task<IActionResult> ReportAdministrator(int adminId, string? comment)
         {
             return Ok();
         }

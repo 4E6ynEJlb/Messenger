@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using UserAPI.Extensions;
 
 namespace UserAPI
 {
@@ -18,14 +19,19 @@ namespace UserAPI
                 options.MemoryBufferThreshold = 1 * 1024 * 1024;
             });
 
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
+                options.ConfigureSwaggerGen();
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Documentation.xml"));
             });
 
+            builder.Services.AddAuthBuilderExtension(builder.Configuration);
+
             var app = builder.Build();
+            app.AddAuthAppExtension();
 
             if (app.Environment.IsDevelopment())
             {
@@ -34,8 +40,6 @@ namespace UserAPI
             }
 
             app.UseHttpsRedirection();
-
-            app.UseAuthorization();
 
 
             app.MapControllers();

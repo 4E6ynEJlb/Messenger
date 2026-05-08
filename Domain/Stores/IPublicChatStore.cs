@@ -18,7 +18,7 @@ namespace Domain.Stores
         public Task<Guid[]> ResendMessagesAsync(Guid chatId, Guid senderId, EnChatType sourceChatType, Guid sourceChatId, Guid[] messages);
         public Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string newText);
         public Task GiveMemberRoleAsync(Guid member, Guid chatId, Guid givingBy, EnPublicChatMemberRole newRole);
-        public Task UpdateChatAsync(Guid chatId, Guid updatingBy, string? newName, bool? isSearchable, MediaFile? newAvatar, EnPublicChatMemberRole defaultMemberRole);
+        public Task UpdateChatAsync(Guid chatId, Guid updatingBy, string? newName, bool? isSearchable, bool updateAvatar, MediaFile? newAvatar, EnPublicChatMemberRole defaultMemberRole);
         public Task BanUserAsync(Guid chatId, Guid userId, Guid banningBy);
         public Task UnbanUserAsync(Guid chatId, Guid userId, Guid unbanningBy);
         public Task DeleteMessageAsync(Guid chatId, Guid messageId, Guid deletingBy);

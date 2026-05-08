@@ -1,12 +1,11 @@
-﻿using Application.Models.Internal;
+﻿using Application.Models.Input;
+using Application.Models.Internal;
 
 namespace Application.Models.Output
 {
-    public record BotCommandInfo
+    public record BotCommandInfo : AddCommandModel
     {
-        public required char? Prefix { get; init; }
-        public required string Command { get; init; }
-        public required string Description { get; init; }
+        public required uint Id { get; set; }
         public required CommandArgument[] Arguments { get; init; }
     }
 }

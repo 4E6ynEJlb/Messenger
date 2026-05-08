@@ -2,10 +2,11 @@
 using Application.Models.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
     public class PersonalChatController : ControllerBase
@@ -101,7 +102,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm]SendingMessageForm sendingMessageBody)
+        public async Task<IActionResult> SendMessage([FromForm]SendMessageForm sendingMessageBody)
         {
             return Ok();
         }

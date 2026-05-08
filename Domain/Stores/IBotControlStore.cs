@@ -11,7 +11,7 @@ namespace Domain.Stores
         public Task<BotTokenInfo> GetBotTokenAsync(Guid botId, Guid gettingBy);
         public Task<BotCommandInfo[]> ListBotCommandsAsync(Guid botId);
         public Task<BotConnectionLogRecord[]> ListBotConnectionsAsync(Guid botId, Guid gettingBy);
-        public Task<Guid> CreateBotAsync(string botName, string tag, string botDescription, Guid owner, MediaFile? botAvatar);
+        public Task<Guid> CreateBotAsync(string botName, string tag, string? botDescription, Guid owner, MediaFile? botAvatar);
         public Task<uint> AddCommandAsync(Guid botId, Guid addingBy, char prefix, string command, string commandDescription);
         public Task<uint> AddCommandArgumentAsync(Guid botId, Guid addingBy, uint commandId, string name, string type);
         public Task UpdateBotAsync (Guid botId, Guid updatingBy, bool updateDescription, bool updateAvatar, string? newName, string? newTag, string? newDescription, MediaFile? newAvatar);

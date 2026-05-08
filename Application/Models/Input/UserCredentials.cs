@@ -2,7 +2,7 @@
 {
     public record UserCredentials
     {
-        public required byte[] Login { get; init; }
-        public required byte[] Password { get; init; }
+        public required string Login { get; init; }
+        public required string Password { get; init; }
     }
 }

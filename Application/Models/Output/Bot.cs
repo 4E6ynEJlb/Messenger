@@ -1,11 +1,11 @@
-﻿namespace Domain.Models.Types
+﻿namespace Application.Models.Output
 {
-    public record BotInfo
+    public record Bot
     {
         public required Guid BotId { get; init; }
         public required string Name { get; init; }
         public required string Tag { get; init; }
-        public required Guid? Avatar { get; init; }
+        public required string? Avatar { get; init; }
         public required string? Description { get; init; }
         public required bool IsEnabled { get; init; }
     }

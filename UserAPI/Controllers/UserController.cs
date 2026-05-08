@@ -3,10 +3,11 @@ using Application.Models.Output;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
+using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
-    [Authorize]
+    [Authorize(Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -58,14 +59,13 @@ namespace UserAPI.Controllers
         /// <summary>
         /// avatars of current user; first is main
         /// </summary>
-        /// <param name="pageOptions"></param>
         /// <returns></returns>
         [ProducesResponseType(typeof(string[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetCurrentUserAvatars(PageOptions pageOptions)
+        public async Task<IActionResult> GetCurrentUserAvatars()
         {
             return Ok();
         }
@@ -74,14 +74,13 @@ namespace UserAPI.Controllers
         /// avatars of user by id; first is main
         /// </summary>
         /// <param name="userId"></param>
-        /// <param name="pageOptions"></param>
         /// <returns>media links</returns>
         [ProducesResponseType(typeof(string[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetUserAvatars(Guid userId, PageOptions pageOptions)
+        public async Task<IActionResult> GetUserAvatars(Guid userId)
         {
             return Ok();
         }
@@ -90,6 +89,7 @@ namespace UserAPI.Controllers
         /// use if current user is banned
         /// </summary>
         /// <returns></returns>
+        [Authorize(Policies.BANNED_USER_POLICY)]
         [ProducesResponseType(typeof(BanInformation), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -112,22 +112,6 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
         public async Task<IActionResult> Chats(PageOptions pageOptions)
-        {
-            return Ok();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pageOptions">all options values >= 1</param>
-        /// <returns>part of chats list</returns>
-        [ProducesResponseType(typeof(User[]), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
-        [HttpPost("[action]")]
-        public async Task<IActionResult> Companions(PageOptions pageOptions)
         {
             return Ok();
         }

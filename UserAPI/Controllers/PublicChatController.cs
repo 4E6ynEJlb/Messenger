@@ -7,7 +7,7 @@ using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
     public class PublicChatController : ControllerBase
@@ -16,13 +16,14 @@ namespace UserAPI.Controllers
         /// works with only searchable public chats
         /// </summary>
         /// <param name="chatName">beginning of chat name, length >= 3 chars, case is ignoring</param>
+        /// <param name="pageOptions">page and page size >=1</param>
         /// <returns></returns>
         [ProducesResponseType(typeof(PublicChatShortInfo[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> Search(string chatName)
+        public async Task<IActionResult> Search(string chatName, PageOptions pageOptions)
         {
             return Ok();
         }
@@ -133,7 +134,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> CreateNewChat([FromForm] PublicChatOptionsForm createPublicChatBody)
+        public async Task<IActionResult> CreateNewChat([FromForm] CreatePublicChatForm createPublicChatBody)
         {
             return Ok();
         }
@@ -156,7 +157,7 @@ namespace UserAPI.Controllers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="sendingMessageBody"></param>
+        /// <param name="form"></param>
         /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
@@ -164,7 +165,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm] SendingMessageForm sendingMessageBody)
+        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm form)
         {
             return Ok();
         }
@@ -222,7 +223,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
-        /// <param name="updatePublicChatBody"></param>
+        /// <param name="form"></param>
         /// <returns>400 if chat name shorter than 3 chars, 403 if user is not owner or creator</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -230,7 +231,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] PublicChatOptionsForm updatePublicChatBody)
+        public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] UpdatePublicChatForm form)
         {
             return Ok();
         }

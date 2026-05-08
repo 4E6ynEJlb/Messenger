@@ -114,7 +114,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm] SendingMessageForm sendingMessageBody)
+        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm sendingMessageBody)
         {
             return Ok();
         }
