@@ -21,57 +21,7 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> GetChatShortInfo(Guid chatId)
         {
             return Ok();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="chatId"></param>
-        /// <returns>list of unique char prefixes for commands. use for search when user is typing command</returns>
-        [ProducesResponseType(typeof(char[]), 200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetBotCommandsPrefixes(Guid chatId)
-        {
-            return Ok();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="chatId"></param>
-        /// <param name="pageOptions"></param>
-        /// <returns>commands that are available in current bot state</returns>
-        [ProducesResponseType(typeof(BotCommandInfo[]), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
-        [HttpPost("{chatId}/[action]")]
-        public async Task<IActionResult> GetBotCommandsList(Guid chatId, PageOptions pageOptions)
-        {
-            return Ok();
-        }
-
-        /// <summary>
-        /// called when user is typing command with prefix to search for matching commands
-        /// </summary>
-        /// <param name="chatId"></param>
-        /// <param name="pageOptions"></param>
-        /// <param name="commandPrefix"></param>
-        /// <returns></returns>
-        [ProducesResponseType(typeof(BotCommandInfo[]), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
-        [HttpPost("[action]")]
-        public async Task<IActionResult> SearchBotCommands(Guid chatId, PageOptions pageOptions, string commandPrefix)
-        {
-            return Ok();
-        }
+        }        
 
         /// <summary>
         /// 

@@ -6,5 +6,6 @@
         public required string ChatName { get; init; }
         public required int NewMessagesCount { get; init; }
         public required Guid? ChatImage { get; init; }
+        public required EnChatType ChatType { get; init; }
     }
 }

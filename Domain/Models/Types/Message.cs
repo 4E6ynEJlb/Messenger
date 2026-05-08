@@ -8,6 +8,9 @@
         public required DateTime SentAt { get; init; }
         public required bool IsUpdated { get; init; }
         public required DateTime? UpdatedAt { get; init; }
+        public required Guid? ReplyTo { get; init; }
+        public required Guid? ResentFrom { get; init; }
+        public required bool? IsBotResend { get; init; }
         public required MediaFile[] AttachedMedia { get; init; }
     }
 }
