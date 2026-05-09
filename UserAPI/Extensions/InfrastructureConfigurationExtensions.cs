@@ -18,6 +18,8 @@ namespace UserAPI.Extensions
                 var dataSourceBuilder =
                     new NpgsqlDataSourceBuilder(cs);
 
+                dataSourceBuilder.ConfigureMessengerPostgresTypes();
+
                 return dataSourceBuilder.Build();
             });
 

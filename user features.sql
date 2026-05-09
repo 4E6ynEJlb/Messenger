@@ -1006,7 +1006,7 @@ BEGIN
         ) att ON true
         WHERE bm.chat_id = get_message.chat_id AND bc.user_id = get_message.getting_by AND bm.message_id = get_message.message_id;
     ELSE
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     RETURN returning_message;
@@ -1231,7 +1231,7 @@ AS
 $$
 BEGIN
     IF NOT validate_refresh_token(old_token, device_id, user_id) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Invalid or revoked refresh token.' USING ERRCODE = '42501';
     END IF;
 
     UPDATE private.users_refresh_tokens
@@ -1842,7 +1842,7 @@ BEGIN
         WHERE b.bot_id = add_command.bot_id
           AND owner = adding_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     SELECT coalesce(max(command_id), 0) INTO last_command_id
@@ -1877,7 +1877,7 @@ BEGIN
           AND owner = adding_by
           AND bc.command_id = add_command_argument.command_id
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     SELECT coalesce(max(argument_id), 0) INTO last_argument_id
@@ -1984,7 +1984,7 @@ BEGIN
         WHERE b.bot_id = update_command.bot_id
           AND owner = updating_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     UPDATE private.bots_commands bc
@@ -2017,7 +2017,7 @@ BEGIN
         WHERE b.bot_id = update_command_argument.bot_id
           AND owner = updating_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     UPDATE private.bots_commands_arguments bca
@@ -2051,7 +2051,7 @@ BEGIN
         WHERE b.bot_id = delete_bot.bot_id
           AND owner = deleting_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     SELECT b.avatar INTO avatar_id
@@ -2091,7 +2091,7 @@ BEGIN
         WHERE b.bot_id = delete_command.bot_id
           AND owner = deleting_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     DELETE
@@ -2128,7 +2128,7 @@ BEGIN
         WHERE b.bot_id = delete_command_argument.bot_id
           AND owner = deleting_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     DELETE
@@ -2342,7 +2342,7 @@ BEGIN
                    OR block_by = author
             ) AND chat_id = chat_id
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'This action is not allowed while users are blocked in this personal chat.' USING ERRCODE = '42501';
     END IF;
 
     IF coalesce(trim(message_text), '') = ''
@@ -2350,7 +2350,7 @@ BEGIN
                attachments IS NULL
                    OR array_length(attachments, 1) = 0
                ) THEN
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     INSERT INTO private.personal_messages (message_id, chat_id, author, message_text, sent_at, is_updated, updated_at, reply_to) VALUES
@@ -2398,7 +2398,7 @@ BEGIN
                    OR block_by = author
             ) AND chat_id = chat_id
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'This action is not allowed while users are blocked in this personal chat.' USING ERRCODE = '42501';
     END IF;
 
     FOR msg IN
@@ -2458,7 +2458,7 @@ BEGIN
                    OR block_by = author
             ) AND chat_id = chat_id
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'This action is not allowed while users are blocked in this personal chat.' USING ERRCODE = '42501';
     END IF;
 
     IF exists(
@@ -2468,7 +2468,7 @@ BEGIN
           AND private.personal_messages.message_id = update_personal_message_text.message_id
           AND resent_from IS NOT NULL
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Forwarded personal messages cannot be edited.' USING ERRCODE = '42501';
     END IF;
 
     IF exists
@@ -2493,7 +2493,7 @@ BEGIN
       AND personal_messages.author = update_personal_message_text.author
       AND personal_messages.message_text != coalesce(trimmed_message_text, '');
     ELSE
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
@@ -2581,7 +2581,7 @@ BEGIN
           AND personal_messages_attachments.attachment_id = delete_file_from_personal_message.attachment_id
           AND resent_from IS NOT NULL
         ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Attachments cannot be removed from forwarded personal messages.' USING ERRCODE = '42501';
     END IF;
 
     WITH deleted AS (
@@ -2629,7 +2629,7 @@ BEGIN
         FROM private.personal_chats_members pcm
         WHERE pcm.chat_id = delete_personal_chat.chat_id AND user_id = deleting_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     WITH deleted AS (
@@ -3039,7 +3039,7 @@ BEGIN
         WHERE pcm.chat_id = send_public_message.chat_id
           AND pcm.user_id = author
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You must be a member of this public chat.' USING ERRCODE = '42501';
     END IF;
 
     UPDATE private.public_chats_members
@@ -3064,7 +3064,7 @@ BEGIN
           AND pcm.user_id = author
           AND pcm.role = 'Reader'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Readers cannot send messages in this public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF coalesce(trim(message_text), '') = ''
@@ -3072,7 +3072,7 @@ BEGIN
                attachments IS NULL
                    OR array_length(attachments, 1) = 0
                ) THEN
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     INSERT INTO private.public_messages (message_id, chat_id, author, message_text, sent_at, is_updated, updated_at, reply_to) VALUES
@@ -3114,7 +3114,7 @@ BEGIN
         WHERE pcm.chat_id = resend_to_public_messages.chat_id
           AND pcm.user_id = author
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You must be a member of this public chat.' USING ERRCODE = '42501';
     END IF;
 
     UPDATE private.public_chats_members
@@ -3139,7 +3139,7 @@ BEGIN
           AND pcm.user_id = author
           AND pcm.role = 'Reader'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Readers cannot send messages in this public chat.' USING ERRCODE = '42501';
     END IF;
 
     FOR msg IN
@@ -3210,7 +3210,7 @@ BEGIN
         WHERE pcm.chat_id = update_public_text_message.chat_id
           AND pcm.user_id = author
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You must be a member of this public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF exists(
@@ -3220,7 +3220,7 @@ BEGIN
           AND pcm.user_id = author
           AND pcm.role = 'Reader'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF exists(
@@ -3230,7 +3230,7 @@ BEGIN
           AND public_messages.message_id = update_public_text_message.message_id
           AND resent_from IS NOT NULL
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Forwarded public messages cannot be edited.' USING ERRCODE = '42501';
     END IF;
 
     IF exists
@@ -3255,7 +3255,7 @@ BEGIN
       AND public_messages.author = update_public_text_message.author
       AND public_messages.message_text != coalesce(trimmed_message_text, '');
     ELSE
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
@@ -3300,7 +3300,7 @@ BEGIN
         FROM private.public_chats_members
         WHERE public_chats_members.chat_id = delete_public_message.chat_id
           AND user_id = delete_public_message.deleting_by) NOT IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot delete this public message.' USING ERRCODE = '42501';
     END IF;
 
     IF exists(
@@ -3310,7 +3310,7 @@ BEGIN
         AND pcm.chat_id = delete_public_message.chat_id
         AND role = 'Reader'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(deleting_by);
@@ -3364,7 +3364,7 @@ BEGIN
         FROM private.public_chats_members
         WHERE public_chats_members.chat_id = delete_file_from_public_message.chat_id
           AND user_id = deleting_by) NOT IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot delete this public message.' USING ERRCODE = '42501';
     END IF;
 
     IF exists(
@@ -3374,7 +3374,7 @@ BEGIN
         AND pcm.chat_id = delete_file_from_public_message.chat_id
         AND role = 'Reader'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(deleting_by);
@@ -3387,7 +3387,7 @@ BEGIN
           AND public_messages_attachments.attachment_id = delete_file_from_public_message.attachment_id
           AND resent_from IS NOT NULL
         ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Attachments cannot be removed from forwarded public messages.' USING ERRCODE = '42501';
     END IF;
 
     WITH deleted AS (
@@ -3434,7 +3434,7 @@ BEGIN
         FROM private.public_chats_members
         WHERE public_chats_members.chat_id = delete_public_chat.chat_id
           AND user_id = deleting_by) != 'Creator' THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Only the chat creator can delete this public chat.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(deleting_by);
@@ -3499,7 +3499,7 @@ BEGIN
                   WHERE public_chats_members.chat_id = give_public_chat_member_role.chat_id
                     AND user_id = giving_by
                     AND public_chats_members.role IN ('Creator', 'Administrator')) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot change member roles in this public chat.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(giving_by);
@@ -3509,7 +3509,7 @@ BEGIN
         FROM public_chats_members
         WHERE member_id = user_id
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     SELECT pcm.role INTO giving_by_role
@@ -3518,7 +3518,7 @@ BEGIN
       AND pcm.chat_id = give_public_chat_member_role.chat_id;
 
     IF role = 'Creator' AND giving_by_role != 'Creator' THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Only the creator can assign the creator role.' USING ERRCODE = '42501';
     END IF;
 
     IF role = 'Creator' THEN
@@ -3577,19 +3577,19 @@ BEGIN
       AND user_id = deleting_user;
 
     IF deleting_by_role IS NULL OR deleting_user_role IS NULL THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     IF NOT deleting_by_role IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot remove this member from the public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF deleting_by = deleting_user THEN
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'You cannot remove yourself from the public chat this way.' USING ERRCODE = '42501';
     END IF;
 
     IF deleting_by_role = 'Administrator' AND deleting_user_role IN ('Administrator', 'Creator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Administrators cannot kick other administrators or the creator.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(deleting_by);
@@ -3633,7 +3633,7 @@ BEGIN
         FROM private.public_chats_members
         WHERE public_chats_members.chat_id = update_public_chat.chat_id
           AND user_id = updating_by) NOT IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Only administrators or the creator can update public chat settings.' USING ERRCODE = '42501';
     END IF;
 
     SELECT private.update_user_online_status(updating_by);
@@ -3708,20 +3708,20 @@ BEGIN
       AND pcm.user_id = ban_user.user_id;
 
     IF banning_by_role IS NULL OR user_role IS NULL THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     IF banning_by_role NOT IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot ban this user in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF user_id = banning_by THEN
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'You cannot ban yourself in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF banning_by_role = 'Administrator'
            AND user_role IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Administrators cannot ban other administrators or the creator.' USING ERRCODE = '42501';
     END IF;
 
     INSERT INTO private.public_chats_banned_users (chat_id, user_id, banned_by)
@@ -3771,16 +3771,16 @@ BEGIN
       AND pcm.user_id = unban_user.user_id;
 
     IF unbanning_by_role IS NULL OR user_role IS NULL THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     IF unbanning_by_role NOT IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'You cannot unban this user in the public chat.' USING ERRCODE = '42501';
     END IF;
 
     IF unbanning_by_role = 'Administrator'
            AND user_role IN ('Creator', 'Administrator') THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'Administrators cannot unban administrators or the creator.' USING ERRCODE = '42501';
     END IF;
 
     DELETE
@@ -3826,7 +3826,7 @@ BEGIN
           AND pcm.user_id = leave_chat.user_id
           AND role = 'Creator'
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'The chat creator cannot leave the public chat.' USING ERRCODE = '42501';
     END IF;
 
     DELETE
@@ -4076,7 +4076,7 @@ BEGIN
           AND bc.chat_id = send_bot_message.chat_id
           AND NOT is_enabled
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'The bot is disabled in this chat.' USING ERRCODE = '42501';
     END IF;
 
     IF coalesce(trim(message_text), '') = ''
@@ -4084,7 +4084,7 @@ BEGIN
                attachments IS NULL
                    OR array_length(attachments, 1) = 0
                ) THEN
-        RAISE DATA_EXCEPTION;
+        RAISE EXCEPTION 'The request data is invalid.' USING ERRCODE = '22000';
     END IF;
 
     INSERT INTO private.bot_messages (message_id, chat_id, is_bot, message_text, sent_at, is_updated, updated_at, reply_to) VALUES
@@ -4132,7 +4132,7 @@ BEGIN
           AND bc.chat_id = resend_to_bot_messages.chat_id
           AND NOT is_enabled
     ) THEN
-        RAISE INSUFFICIENT_PRIVILEGE;
+        RAISE EXCEPTION 'The bot is disabled in this chat.' USING ERRCODE = '42501';
     END IF;
 
     FOR msg IN
@@ -4237,7 +4237,7 @@ BEGIN
         WHERE bc.chat_id = delete_bot_chat.chat_id
           AND bc.user_id = deleting_by
     ) THEN
-        RAISE NO_DATA_FOUND;
+        RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
     WITH deleted AS (
