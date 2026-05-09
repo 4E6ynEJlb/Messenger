@@ -9,5 +9,6 @@
   <Project Path="Application/Application.csproj" />
   <Project Path="Domain/Domain.csproj" Id="59d1402d-cb45-4456-bf43-9ffdca267e07" />
   <Project Path="Infrastructure/Infrastructure.csproj" Id="e074b5e6-857a-4181-b9bf-b4db5cc2584c" />
+  <Project Path="Persistence/Persistence.csproj" Id="ef636132-b653-49c5-8337-10c9ec81bba9" />
   <Project Path="UserAPI/UserAPI.csproj" />
 </Solution>

@@ -1,4 +1,3 @@
-using Infrastructure.Database;
 using Microsoft.AspNetCore.Http.Features;
 using UserAPI.Extensions;
 
