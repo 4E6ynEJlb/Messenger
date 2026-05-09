@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Domain.Models
+namespace Domain
 {
     public abstract class HttpException : Exception
     {

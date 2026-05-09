@@ -2,6 +2,6 @@
 {
     public record UpdateCredentials : UserCredentials
     {
-        public required byte[] OldPassword { get; init; }
+        public required string OldPassword { get; init; }
     }
 }
