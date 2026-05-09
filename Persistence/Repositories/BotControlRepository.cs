@@ -3,6 +3,7 @@ using Domain.Models.Types;
 using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
+using Persistence.Exceptions;
 using Persistence;
 
 namespace Persistence.Repositories
@@ -32,6 +33,7 @@ namespace Persistence.Repositories
                     name,
                     type
                 }, cancellationToken)).ConfigureAwait(false);
+                if (v == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
                 return (uint)v;
             }
             catch (PostgresException ex)
@@ -56,6 +58,7 @@ namespace Persistence.Repositories
                     command,
                     description = commandDescription
                 }, cancellationToken)).ConfigureAwait(false);
+                if (v == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
                 return (uint)v;
             }
             catch (PostgresException ex)
@@ -114,8 +117,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.delete_bot(@bot_id, @deleting_by)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
                     new { bot_id = botId, deleting_by = deletingBy }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -131,13 +135,14 @@ namespace Persistence.Repositories
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
                     "SELECT sch_user.delete_command_argument(@bot_id, @deleting_by, @command_id, @argument_id)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     bot_id = botId,
                     deleting_by = deletingBy,
                     command_id = (int)commandId,
                     argument_id = (int)argumentId
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -151,12 +156,13 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.delete_command(@bot_id, @deleting_by, @command_id)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     bot_id = botId,
                     deleting_by = deletingBy,
                     command_id = (int)commandId
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -348,7 +354,8 @@ namespace Persistence.Repositories
                     };
                 }
 
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, param, cancellationToken)).ConfigureAwait(false);
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, param, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -371,7 +378,7 @@ namespace Persistence.Repositories
                         @new_name,
                         @new_type)
                     """;
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     bot_id = botId,
                     updating_by = updatingBy,
@@ -380,6 +387,7 @@ namespace Persistence.Repositories
                     new_name = newName,
                     new_type = newType
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -402,7 +410,7 @@ namespace Persistence.Repositories
                         @new_command,
                         @new_description)
                     """;
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     bot_id = botId,
                     updating_by = updatingBy,
@@ -411,6 +419,7 @@ namespace Persistence.Repositories
                     new_command = newCommand,
                     new_description = newCommandDescription
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {

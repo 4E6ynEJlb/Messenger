@@ -42,8 +42,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.invalidate_refresh_token(@token)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new { token = refreshToken }, cancellationToken))
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new { token = refreshToken }, cancellationToken))
                     .ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {

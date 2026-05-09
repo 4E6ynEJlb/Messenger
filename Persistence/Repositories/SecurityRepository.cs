@@ -22,12 +22,13 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.report_administrator(@reported_by, @administrator_id, @comment)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     reported_by = reportedBy,
                     administrator_id = adminId,
                     comment
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -41,8 +42,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.report_bot(@reported_by, @bot_id, @comment)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
                     new { reported_by = reportedBy, bot_id = botId, comment }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -58,7 +60,7 @@ namespace Persistence.Repositories
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
                     "SELECT sch_user.report_message(@reported_by, @chat_type, @chat_id, @message_id, @comment)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     reported_by = reportedBy,
                     chat_type = chatType,
@@ -66,6 +68,7 @@ namespace Persistence.Repositories
                     message_id = messageId,
                     comment
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -79,8 +82,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.report_public_chat(@reported_by, @chat_id, @comment)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
                     new { reported_by = reportedBy, chat_id = chatId, comment }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -94,12 +98,13 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.report_user(@reported_by, @reported_user_id, @comment)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     reported_by = reportedBy,
                     reported_user_id = reportedUserId,
                     comment
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {

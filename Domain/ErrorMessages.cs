@@ -62,6 +62,8 @@
 
         public const string RESOURCE_NOT_FOUND = "The requested resource was not found.";
 
+        public const string NO_CHANGES_APPLIED = "No changes were applied to the database.";
+
         public const string INVALID_REQUEST_DATA = "The request data is invalid.";
 
         public const string FORBIDDEN_OPERATION = "This operation is not allowed.";

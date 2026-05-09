@@ -5,6 +5,7 @@ using Domain.Models.Types.Tables;
 using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
+using Persistence.Exceptions;
 
 namespace Persistence.Repositories
 {
@@ -17,14 +18,15 @@ namespace Persistence.Repositories
             _connectionFactory = connectionFactory;
         }
 
-        public async Task<UserData?> AuthUserAsync(string login, string password, CancellationToken cancellationToken)
+        public async Task<UserData> AuthUserAsync(string login, string password, CancellationToken cancellationToken)
         {
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT * FROM sch_user.auth_user(@login, @password)";
-                return await conn.QuerySingleOrDefaultAsync<UserData>(
+                var row = await conn.QuerySingleOrDefaultAsync<UserData>(
                     RepositoryExecution.Cmd(sql, new { login, password }, cancellationToken)).ConfigureAwait(false);
+                return row ?? throw new ResourceNotFoundException(new Exception("User not found."));
             }
             catch (PostgresException ex)
             {
@@ -53,8 +55,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.delete_user(@user_id, @user_password)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId, user_password = userPassword }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -68,8 +71,9 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT sch_user.delete_user_avatar(@user_id, @avatar)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId, avatar = avatarId }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -77,14 +81,15 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task<BannedUsers?> GetBannedUserInformationAsync(Guid userId, CancellationToken cancellationToken)
+        public async Task<BannedUsers> GetBannedUserInformationAsync(Guid userId, CancellationToken cancellationToken)
         {
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT * FROM sch_user.get_banned_user_information(@user_id)";
-                return await conn.QuerySingleOrDefaultAsync<BannedUsers>(RepositoryExecution.Cmd(sql,
+                var row = await conn.QuerySingleOrDefaultAsync<BannedUsers>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId }, cancellationToken)).ConfigureAwait(false);
+                return row ?? throw new ResourceNotFoundException(new Exception("Banned user information not found."));
             }
             catch (PostgresException ex)
             {
@@ -108,14 +113,15 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task<UserData?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken)
+        public async Task<UserData> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken)
         {
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT * FROM sch_user.get_user_by_id(@user_id)";
-                return await conn.QuerySingleOrDefaultAsync<UserData>(RepositoryExecution.Cmd(sql,
+                var row = await conn.QuerySingleOrDefaultAsync<UserData>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId }, cancellationToken)).ConfigureAwait(false);
+                return row ?? throw new ResourceNotFoundException(new Exception("User not found."));
             }
             catch (PostgresException ex)
             {
@@ -123,14 +129,15 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task<UserData?> GetUserByTagAsync(string tag, CancellationToken cancellationToken)
+        public async Task<UserData> GetUserByTagAsync(string tag, CancellationToken cancellationToken)
         {
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql = "SELECT * FROM sch_user.get_user_by_tag(@tag)";
-                return await conn.QuerySingleOrDefaultAsync<UserData>(RepositoryExecution.Cmd(sql,
+                var row = await conn.QuerySingleOrDefaultAsync<UserData>(RepositoryExecution.Cmd(sql,
                     new { tag }, cancellationToken)).ConfigureAwait(false);
+                return row ?? throw new ResourceNotFoundException(new Exception("User not found."));
             }
             catch (PostgresException ex)
             {
@@ -201,13 +208,14 @@ namespace Persistence.Repositories
                         @user_new_login::dom_auth_string,
                         @user_new_password::dom_auth_string)
                     """;
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     user_id = updateUserAuthModel.UserId,
                     user_current_password = updateUserAuthModel.UserCurrentPassword,
                     user_new_login = updateUserAuthModel.UserNewLogin,
                     user_new_password = updateUserAuthModel.UserNewPassword
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -232,7 +240,7 @@ namespace Persistence.Repositories
                             @bio,
                             @was_online)::user_data)
                     """;
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     user_id = newUserData.UserId,
                     first_name = newUserData.FirstName,
@@ -243,6 +251,7 @@ namespace Persistence.Repositories
                     bio = newUserData.Bio,
                     was_online = newUserData.WasOnline
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
@@ -260,13 +269,14 @@ namespace Persistence.Repositories
                         @user_id,
                         ROW(@media_id, @file_name, @content_type)::media_file)
                     """;
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     user_id = userId,
                     media_id = newUserAvatar.MediaId,
                     file_name = newUserAvatar.FileName,
                     content_type = newUserAvatar.ContentType
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
