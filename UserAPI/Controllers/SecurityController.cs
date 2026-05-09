@@ -15,7 +15,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportMessage(ChatType chatType, Guid chatId, Guid messageId, string? comment)
+        public async Task<IActionResult> ReportMessage(ChatType chatType, Guid chatId, Guid messageId, string? comment, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -25,7 +25,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportUser(Guid reportedUserId, string? comment)
+        public async Task<IActionResult> ReportUser(Guid reportedUserId, string? comment, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -35,7 +35,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportBot(Guid botId, string? comment)
+        public async Task<IActionResult> ReportBot(Guid botId, string? comment, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -45,7 +45,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportPublicChat(Guid chatId, string? comment)
+        public async Task<IActionResult> ReportPublicChat(Guid chatId, string? comment, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -56,7 +56,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> ReportAdministrator(int adminId, string? comment)
+        public async Task<IActionResult> ReportAdministrator(int adminId, string? comment, CancellationToken cancellationToken)
         {
             return Ok();
         }

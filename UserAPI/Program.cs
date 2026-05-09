@@ -1,3 +1,4 @@
+using Infrastructure.Database;
 using Microsoft.AspNetCore.Http.Features;
 using UserAPI.Extensions;
 
@@ -18,7 +19,10 @@ namespace UserAPI
                 options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
                 options.MemoryBufferThreshold = 1 * 1024 * 1024;
             });
+            builder.Configuration.AddJsonFile("infrastructureoptions.json");
 
+            builder.ConfigureDatabaseConnectionFactory();
+            builder.ConfigureMinioStorage();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

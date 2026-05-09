@@ -4,10 +4,10 @@ namespace Domain.Stores
 {
     public interface ISecurityStore
     {
-        public Task ReportMessage(Guid reportedBy, EnChatType chatType, Guid chatId, Guid messageId, string? comment);
-        public Task ReportUser(Guid reportedBy, Guid reportedUserId, string? comment);
-        public Task ReportBot(Guid reportedBy, Guid botId, string? comment);
-        public Task ReportPublicChat(Guid reportedBy, Guid chatId, string? comment);
-        public Task ReportAdministrator(Guid reportedBy, int adminId, string? comment);
+        public Task ReportMessageAsync(Guid reportedBy, EnChatType chatType, Guid chatId, Guid messageId, string? comment, CancellationToken cancellationToken);
+        public Task ReportUserAsync(Guid reportedBy, Guid reportedUserId, string? comment, CancellationToken cancellationToken);
+        public Task ReportBotAsync(Guid reportedBy, Guid botId, string? comment, CancellationToken cancellationToken);
+        public Task ReportPublicChatAsync(Guid reportedBy, Guid chatId, string? comment, CancellationToken cancellationToken);
+        public Task ReportAdministratorAsync(Guid reportedBy, int adminId, string? comment, CancellationToken cancellationToken);
     }
 }

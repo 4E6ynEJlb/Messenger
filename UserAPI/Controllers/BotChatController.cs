@@ -12,13 +12,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if is not belonging to current user</returns>
         [ProducesResponseType(typeof(ChatShortInfo), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("{chatId}")]
-        public async Task<IActionResult> GetChatShortInfo(Guid chatId)
+        public async Task<IActionResult> GetChatShortInfo(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }        
@@ -27,13 +28,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>list of buttons with inner command, outer text or emoji and background color (optional)</returns>
         [ProducesResponseType(typeof(BotButton[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GetActiveButtonsList(Guid chatId)
+        public async Task<IActionResult> GetActiveButtonsList(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -43,6 +45,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messagesSelectOptions"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user</returns>
         [ProducesResponseType(typeof(Message[]), 200)]
         [ProducesResponseType(400)]
@@ -50,7 +53,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("{chatId}/[action]")]
-        public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions)
+        public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -60,6 +63,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user or message does not exist</returns>
         [ProducesResponseType(typeof(Message), 200)]
         [ProducesResponseType(400)]
@@ -67,7 +71,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId)
+        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -76,6 +80,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
@@ -83,7 +88,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetBotIdByChat(Guid chatId)
+        public async Task<IActionResult> GetBotIdByChat(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -92,13 +97,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="destinationBotId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>returns id of existing chat or creates a new one</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> OpenChatWithBot(Guid destinationBotId)
+        public async Task<IActionResult> OpenChatWithBot(Guid destinationBotId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -107,6 +113,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="sendingMessageBody"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
@@ -114,7 +121,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm sendingMessageBody)
+        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm sendingMessageBody, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -123,13 +130,14 @@ namespace UserAPI.Controllers
         /// works like blocking a bot - user will not receive messages from it
         /// </summary>
         /// <param name="botId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> DisableBot(Guid botId)
+        public async Task<IActionResult> DisableBot(Guid botId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -138,13 +146,14 @@ namespace UserAPI.Controllers
         /// unblocking bot
         /// </summary>
         /// <param name="botId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> EnableBot(Guid botId)
+        public async Task<IActionResult> EnableBot(Guid botId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -153,13 +162,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteChat(Guid chatId)
+        public async Task<IActionResult> DeleteChat(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }

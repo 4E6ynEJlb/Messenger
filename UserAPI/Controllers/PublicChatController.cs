@@ -17,13 +17,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatName">beginning of chat name, length >= 3 chars, case is ignoring</param>
         /// <param name="pageOptions">page and page size >=1</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(typeof(PublicChatShortInfo[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> Search(string chatName, PageOptions pageOptions)
+        public async Task<IActionResult> Search(string chatName, PageOptions pageOptions, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -32,13 +33,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if is not belonging to current user</returns>
         [ProducesResponseType(typeof(PublicChatShortInfo), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetChatShortInfo(Guid chatId)
+        public async Task<IActionResult> GetChatShortInfo(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -47,13 +49,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if is not belonging to current user</returns>
         [ProducesResponseType(typeof(PublicChatFullInfo), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("{chatId}")]
-        public async Task<IActionResult> GetChatFullInfo(Guid chatId)
+        public async Task<IActionResult> GetChatFullInfo(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -62,13 +65,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>id of users banned from chat, 403 if current user is not admin/owner, 404 if not a member</returns>
         [ProducesResponseType(typeof(Guid[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> GetBannedUsers(Guid chatId)
+        public async Task<IActionResult> GetBannedUsers(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -78,6 +82,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messagesSelectOptions"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user</returns>
         [ProducesResponseType(typeof(Message[]), 200)]
         [ProducesResponseType(400)]
@@ -85,7 +90,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("{chatId}/[action]")]
-        public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions)
+        public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -95,6 +100,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user or message does not exist</returns>
         [ProducesResponseType(typeof(Message), 200)]
         [ProducesResponseType(400)]
@@ -102,7 +108,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId)
+        public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -112,6 +118,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="auditOptions">page and page size >=1</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>400 if invalid options, 403 if not owner</returns>
         [ProducesResponseType(typeof(PublicChatAuditRecord), 200)]
         [ProducesResponseType(400)]
@@ -119,7 +126,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> AuditChat(Guid chatId, PageOptions auditOptions)
+        public async Task<IActionResult> AuditChat(Guid chatId, PageOptions auditOptions, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -128,13 +135,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="createPublicChatBody"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>400 if chat name shorter than 3 chars</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [HttpGet("[action]")]
-        public async Task<IActionResult> CreateNewChat([FromForm] CreatePublicChatForm createPublicChatBody)
+        public async Task<IActionResult> CreateNewChat([FromForm] CreatePublicChatForm createPublicChatBody, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -143,13 +151,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if current user banned from chat</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]/{chatId}")]
-        public async Task<IActionResult> JoinChat(Guid chatId)
+        public async Task<IActionResult> JoinChat(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -158,6 +167,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="form"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
@@ -165,7 +175,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm form)
+        public async Task<IActionResult> SendMessage([FromForm] SendMessageForm form, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -174,13 +184,14 @@ namespace UserAPI.Controllers
         /// call, when user is typing a message
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPut("[action]")]
-        public async Task<IActionResult> Typing(Guid chatId)
+        public async Task<IActionResult> Typing(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -189,6 +200,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="messageText"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat or message is not belonging to current user</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -196,7 +208,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> EditMessageText(UpdatingMessage messageText)
+        public async Task<IActionResult> EditMessageText(UpdatingMessage messageText, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -207,6 +219,7 @@ namespace UserAPI.Controllers
         /// <param name="member"></param>
         /// <param name="chatId"></param>
         /// <param name="role">must be lower than current user role</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if current user is not owner or admin</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -214,7 +227,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> GiveMemberRole(Guid member, Guid chatId, PublicChatMemberRole role)
+        public async Task<IActionResult> GiveMemberRole(Guid member, Guid chatId, PublicChatMemberRole role, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -224,6 +237,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="form"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>400 if chat name shorter than 3 chars, 403 if user is not owner or creator</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -231,7 +245,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] UpdatePublicChatForm form)
+        public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] UpdatePublicChatForm form, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -241,13 +255,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="userId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if not owner or creator, 404 if not a member</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> BanUser(Guid chatId, Guid userId)
+        public async Task<IActionResult> BanUser(Guid chatId, Guid userId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -257,13 +272,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="userId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if not owner or creator, 404 if not a member</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> UnbanUser(Guid chatId, Guid userId)
+        public async Task<IActionResult> UnbanUser(Guid chatId, Guid userId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -273,13 +289,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat or message is not belonging to current user (available for owner or admins)</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteMessage(Guid chatId, Guid messageId)
+        public async Task<IActionResult> DeleteMessage(Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -289,6 +306,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="mediaLink"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat or message is not belonging to current user</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
@@ -296,7 +314,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink)
+        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -305,13 +323,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if owner (must make another user as owner at first)</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> LeaveChat(Guid chatId)
+        public async Task<IActionResult> LeaveChat(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -321,13 +340,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="memberId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if not owner or admin</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteChatMember(Guid chatId, Guid memberId)
+        public async Task<IActionResult> DeleteChatMember(Guid chatId, Guid memberId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -337,13 +357,14 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="memberId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if not owner or admin</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteAndBanMember(Guid chatId, Guid memberId)
+        public async Task<IActionResult> DeleteAndBanMember(Guid chatId, Guid memberId, CancellationToken cancellationToken)
         {
             return Ok();
         }
@@ -352,13 +373,14 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>403 if not owner</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteChat(Guid chatId)
+        public async Task<IActionResult> DeleteChat(Guid chatId, CancellationToken cancellationToken)
         {
             return Ok();
         }
