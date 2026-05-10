@@ -2,8 +2,8 @@
 {
     public record RegisterUser : UpdateUser
     {
-        public required byte[] UserLogin { get; init; }
-        public required byte[] UserPassword { get; init; }
+        public required string UserLogin { get; init; }
+        public required string UserPassword { get; init; }
 
     }
 }

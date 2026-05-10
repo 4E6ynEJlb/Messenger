@@ -6,8 +6,7 @@ namespace Application.Models.Input
     {
         public required string ChatName { get; init; }
         public required bool Searchable { get; init; }
-        public required FileUpload? ChatImage { get; init; }
-        public required Guid[] InitialMembers { get; init; }
+        public required string? ChatImage { get; init; }
         public required PublicChatMemberRole DefaultMemberRole { get; init; }
     }
 }

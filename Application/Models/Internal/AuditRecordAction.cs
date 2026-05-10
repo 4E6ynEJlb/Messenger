@@ -2,11 +2,15 @@
 {
     public enum AuditRecordAction
     {
-        BanUser,
-        UnbanUser,
-        KickUser,
-        GiveRole,
-        ChangeSettings,
-        DeleteMessage
+        Join,
+        UpdateMessage,
+        ChangeRole,
+        UpdateSettings,
+        Ban,
+        Unban,
+        DeleteMessage,
+        DeleteAttachment,
+        Leave,
+        Kick
     }
 }

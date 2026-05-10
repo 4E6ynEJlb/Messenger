@@ -105,7 +105,7 @@ namespace Persistence.Repositories
                 const string sql = "SELECT * FROM sch_user.get_user_avatars(@user_id)";
                 var rows = await conn.QueryAsync<Guid>(
                     RepositoryExecution.Cmd(sql, new { user_id = userId }, cancellationToken)).ConfigureAwait(false);
-                return rows.ToArray();
+                return rows.Reverse().ToArray();
             }
             catch (PostgresException ex)
             {
@@ -118,7 +118,7 @@ namespace Persistence.Repositories
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql = "SELECT * FROM sch_user.get_user_by_id(@user_id)";
+                const string sql = "SELECT (sch_user.get_user_by_id(@user_id)).*";
                 var row = await conn.QuerySingleOrDefaultAsync<UserData>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId }, cancellationToken)).ConfigureAwait(false);
                 return row ?? throw new ResourceNotFoundException(new Exception("User not found."));

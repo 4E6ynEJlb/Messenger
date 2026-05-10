@@ -1,16 +1,28 @@
-﻿using Infrastructure.Database;
+
+using Infrastructure.Database;
 using Infrastructure.Storage;
+using Microsoft.AspNetCore.Connections;
 using Minio;
 using Minio.AspNetCore;
 using Npgsql;
 
-namespace UserAPI.Extensions
+namespace MaintenanceAPI
 {
-    public static class InfrastructureConfigurationExtensions
+    public class Program
     {
-        public static void ConfigureDatabaseConnectionFactory(this WebApplicationBuilder builder)
+        public static void Main(string[] args)
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+            var builder = WebApplication.CreateBuilder(args);
+
+            // Add services to the container.
+
+            builder.Services.AddControllers();
+
+            builder.Configuration.AddJsonFile("infrastructureoptions.json");
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton(sp =>
             {
                 var cs = builder.Configuration
@@ -25,10 +37,7 @@ namespace UserAPI.Extensions
             });
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
-        }
 
-        public static void ConfigureMinioStorage(this WebApplicationBuilder builder)
-        {
             builder.Services.AddMinio(options =>
             {
                 options.AccessKey = builder.Configuration.GetSection("MinioOptions").GetValue<string>("AccessKey") ?? throw new ArgumentNullException("MinIo Access Key");
@@ -37,6 +46,23 @@ namespace UserAPI.Extensions
             });
             builder.Services.Configure<Infrastructure.Models.MinioOptions>(builder.Configuration.GetSection("MinioOptions"));
             builder.Services.AddSingleton<IObjectStorage, MinioStorage>();
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
+
+            app.MapControllers();
+
+            app.Run();
         }
     }
 }

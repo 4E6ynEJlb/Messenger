@@ -1,6 +1,12 @@
 ﻿using Application.Models.Input;
+using Application.Models.Internal.Constants;
 using Application.Models.Output;
+using Domain.Models.Types;
+using Domain.Stores;
+using Infrastructure.Storage;
 using Microsoft.AspNetCore.Mvc;
+using UserAPI.Extensions;
+using UserAPI.Services.Interfaces;
 
 namespace UserAPI.Controllers
 {
@@ -8,6 +14,16 @@ namespace UserAPI.Controllers
     [ApiController]
     public class BotChatController : ControllerBase
     {
+        string mediaPrefix = "https://localhost:10102/Media";
+        private readonly IBotChatStore _botChatStore;
+        private readonly IUpdatesService _updatesService;
+        private readonly IObjectStorage _objectStorage;
+        public BotChatController(IBotChatStore botChatStore, IUpdatesService updatesService, IObjectStorage objectStorage)
+        {
+            _botChatStore = botChatStore;
+            _updatesService = updatesService;
+            _objectStorage = objectStorage;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -21,6 +37,21 @@ namespace UserAPI.Controllers
         [HttpGet("{chatId}")]
         public async Task<IActionResult> GetChatShortInfo(Guid chatId, CancellationToken cancellationToken)
         {
+            var chatShortInfo = await _botChatStore.GetChatShortInfoAsync(chatId, HttpContext.GetUserId(), cancellationToken);
+            var result = new ChatShortInfo
+            {
+                ChatId = chatShortInfo.ChatId,
+                ChatName = chatShortInfo.ChatName,
+                ChatType = chatShortInfo.ChatType switch
+                {
+                    EnChatType.Bot => ChatType.Bot,
+                    EnChatType.Personal => ChatType.Personal,
+                    EnChatType.Public => ChatType.Group,
+                    _ => throw new Exception("Unknown chat type")
+                },
+                NewMessagesCount = chatShortInfo.NewMessagesCount,
+                ChatImage = chatShortInfo.ChatImage == null ? null : $"{mediaPrefix}/{chatShortInfo.ChatImage}"
+            };
             return Ok();
         }        
 
@@ -37,7 +68,19 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> GetActiveButtonsList(Guid chatId, CancellationToken cancellationToken)
         {
-            return Ok();
+            var buttons = await _botChatStore.GetActiveButtonsListAsync(chatId, HttpContext.GetUserId(), cancellationToken);
+            var result = buttons.Select(b => new BotButton
+            {
+                Command = b.InnerCommand,
+                Text = b.ButtonText,
+                BackgroundColor = b.BackgroundColor is not null ? new Color
+                {
+                    R = b.BackgroundColor[0],
+                    G = b.BackgroundColor[1],
+                    B = b.BackgroundColor[2]
+                } : null
+            }).ToArray();
+            return Ok(result);
         }
 
         /// <summary>
@@ -47,7 +90,7 @@ namespace UserAPI.Controllers
         /// <param name="messagesSelectOptions"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user</returns>
-        [ProducesResponseType(typeof(Message[]), 200)]
+        [ProducesResponseType(typeof(Application.Models.Output.Message[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -55,7 +98,22 @@ namespace UserAPI.Controllers
         [HttpPost("{chatId}/[action]")]
         public async Task<IActionResult> GetMessages(Guid chatId, MessagesSelectOptions messagesSelectOptions, CancellationToken cancellationToken)
         {
-            return Ok();
+            var messages = await _botChatStore.GetMessagesAsync(chatId, HttpContext.GetUserId(), messagesSelectOptions.MessagesCount, messagesSelectOptions.SentBefore ?? DateTime.UtcNow, cancellationToken);
+            var result = messages.Select(m => new Application.Models.Output.Message
+            {
+                MessageId = m.MessageId,
+                Author = m.Author,
+                SentAt = m.SentAt,
+                IsUpdated = m.IsUpdated,
+                UpdatedAt = m.UpdatedAt,
+                ReplyTo = m.ReplyTo,
+                ResentFrom = m.ResentFrom,
+                IsBotResend = m.IsBotResend,
+                MessageText = m.MessageText,
+                AttachedMedia = m.AttachedMedia.Select(am => $"{mediaPrefix}/{am}").ToArray(),
+                ChatId = chatId
+            }).ToArray();
+            return Ok(result);
         }
 
         /// <summary>
@@ -65,7 +123,7 @@ namespace UserAPI.Controllers
         /// <param name="messageId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat is not belonging to current user or message does not exist</returns>
-        [ProducesResponseType(typeof(Message), 200)]
+        [ProducesResponseType(typeof(Application.Models.Output.Message), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -73,7 +131,22 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> GetMessage(Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
-            return Ok();
+            var message = await _botChatStore.GetMessageAsync(chatId, messageId, HttpContext.GetUserId(), cancellationToken);
+            var result = new Application.Models.Output.Message
+                {
+                    MessageId = message.MessageId,
+                    Author = message.Author,
+                    SentAt = message.SentAt,
+                    IsUpdated = message.IsUpdated,
+                    UpdatedAt = message.UpdatedAt,
+                    ReplyTo = message.ReplyTo,
+                    ResentFrom = message.ResentFrom,
+                    IsBotResend = message.IsBotResend,
+                    MessageText = message.MessageText,
+                    AttachedMedia = message.AttachedMedia.Select(am => $"{mediaPrefix}/{am}").ToArray(),
+                    ChatId = chatId
+                };
+            return Ok(result);
         }
 
         /// <summary>
@@ -90,7 +163,8 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> GetBotIdByChat(Guid chatId, CancellationToken cancellationToken)
         {
-            return Ok();
+            var botId = await _botChatStore.GetBotIdByChatIdAsync(chatId, HttpContext.GetUserId(), cancellationToken);
+            return Ok(botId);
         }
 
         /// <summary>
@@ -106,7 +180,8 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> OpenChatWithBot(Guid destinationBotId, CancellationToken cancellationToken)
         {
-            return Ok();
+            var chatId = await _botChatStore.CreateChatAsync(destinationBotId, HttpContext.GetUserId(), cancellationToken);
+            return Ok(chatId);
         }
 
         /// <summary>
@@ -123,7 +198,50 @@ namespace UserAPI.Controllers
         [HttpPut("[action]")]
         public async Task<IActionResult> SendMessage([FromForm] SendMessageForm sendingMessageBody, CancellationToken cancellationToken)
         {
-            return Ok();
+            var messageId = await _botChatStore.SendMessageAsync(sendingMessageBody.ChatId, HttpContext.GetUserId(),
+                sendingMessageBody.ReplyTo, sendingMessageBody.MessageText,
+                sendingMessageBody.Attachments.Select(a => new MediaFile
+                {
+                    ContentType = a.ContentType,
+                    FileName = a.FileName,
+                    MediaId = new Func<Guid>(() =>
+                    {
+                        var id = Guid.NewGuid();
+                        _objectStorage.SaveAsync(a.OpenReadStream(), id, cancellationToken).Wait();
+                        return id;
+                    })()
+                }).ToArray(), cancellationToken);
+            await _updatesService.MessagesSent(sendingMessageBody.ChatId, [messageId],
+                [
+                HttpContext.GetUserId()
+                ],
+                ChatType.Personal, cancellationToken);
+            return Ok(messageId);
+        }
+
+        [ProducesResponseType(typeof(Guid[]), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [HttpPut("[action]")]
+        public async Task<IActionResult> ResendMessages(ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken)
+        {
+            var messageIds = await _botChatStore.ResendMessagesAsync(resendMessagesModel.ChatId,
+                HttpContext.GetUserId(), resendMessagesModel.SourceChatType switch
+                {
+                    ChatType.Personal => EnChatType.Personal,
+                    ChatType.Group => EnChatType.Public,
+                    ChatType.Bot => EnChatType.Bot,
+                    _ => throw new NotImplementedException()
+                }, resendMessagesModel.SourceChatId,
+                resendMessagesModel.Messages, cancellationToken);
+            await _updatesService.MessagesSent(resendMessagesModel.ChatId, messageIds,
+                [
+                HttpContext.GetUserId()
+                ],
+                ChatType.Personal, cancellationToken);
+            return Ok(messageIds);
         }
 
         /// <summary>
@@ -139,6 +257,7 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> DisableBot(Guid botId, CancellationToken cancellationToken)
         {
+            await _botChatStore.DisableBotAsync(botId, HttpContext.GetUserId(), cancellationToken);
             return Ok();
         }
 
@@ -155,6 +274,7 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> EnableBot(Guid botId, CancellationToken cancellationToken)
         {
+            await _botChatStore.EnableBotAsync(botId, HttpContext.GetUserId(), cancellationToken);
             return Ok();
         }
 
@@ -171,6 +291,7 @@ namespace UserAPI.Controllers
         [HttpDelete("[action]")]
         public async Task<IActionResult> DeleteChat(Guid chatId, CancellationToken cancellationToken)
         {
+            await _botChatStore.DeleteChatAsync(chatId, HttpContext.GetUserId(), cancellationToken);
             return Ok();
         }
     }

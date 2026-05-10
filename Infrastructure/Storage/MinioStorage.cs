@@ -23,10 +23,9 @@ namespace Infrastructure.Storage
             StatObjectArgs statObjectArgs = new StatObjectArgs().WithBucket(_bucketName).WithObject(name.ToString());
             var statArgs = await _client.StatObjectAsync(statObjectArgs);
             MemoryStream stream = new MemoryStream(Convert.ToInt32(statArgs.Size));
-            GetObjectArgs args = new GetObjectArgs().WithBucket(_bucketName).WithObject(name.ToString()).WithCallbackStream(async str =>
+            GetObjectArgs args = new GetObjectArgs().WithBucket(_bucketName).WithObject(name.ToString()).WithCallbackStream(str =>
             {
-                await str.CopyToAsync(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                str.CopyTo(stream);
             });
             try
             {
@@ -36,6 +35,8 @@ namespace Infrastructure.Storage
             {
                 throw new FileDoesNotExistException(e);
             }
+
+            stream.Seek(0, SeekOrigin.Begin);
             return stream;
         }
 

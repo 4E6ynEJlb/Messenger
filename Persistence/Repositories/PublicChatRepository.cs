@@ -391,7 +391,7 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string text, MediaFile[]? attachments,
+        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string? text, MediaFile[]? attachments,
             CancellationToken cancellationToken)
         {
             try
@@ -495,7 +495,7 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string newText,
+        public async Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string? newText,
             CancellationToken cancellationToken)
         {
             try

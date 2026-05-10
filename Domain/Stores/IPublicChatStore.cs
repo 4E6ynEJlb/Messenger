@@ -14,9 +14,9 @@ namespace Domain.Stores
         public Task<AuditLogRecord[]> AuditChatAsync(Guid chatId, Guid gettingBy, uint pageNumber, uint pageSize, CancellationToken cancellationToken);
         public Task<Guid> CreateNewChatAsync(string chatName, Guid creatorId, bool isSearchable, MediaFile avatar, EnPublicChatMemberRole defaultMemberRole, CancellationToken cancellationToken);
         public Task JoinChatAsync(Guid chatId, Guid userId, CancellationToken cancellationToken);
-        public Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string text, MediaFile[]? attachments, CancellationToken cancellationToken);
+        public Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string? text, MediaFile[]? attachments, CancellationToken cancellationToken);
         public Task<Guid[]> ResendMessagesAsync(Guid chatId, Guid senderId, EnChatType sourceChatType, Guid sourceChatId, Guid[] messages, CancellationToken cancellationToken);
-        public Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string newText, CancellationToken cancellationToken);
+        public Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string? newText, CancellationToken cancellationToken);
         public Task GiveMemberRoleAsync(Guid member, Guid chatId, Guid givingBy, EnPublicChatMemberRole newRole, CancellationToken cancellationToken);
         public Task UpdateChatAsync(Guid chatId, Guid updatingBy, string? newName, bool? isSearchable, bool updateAvatar, MediaFile? newAvatar, EnPublicChatMemberRole defaultMemberRole, CancellationToken cancellationToken);
         public Task BanUserAsync(Guid chatId, Guid userId, Guid banningBy, CancellationToken cancellationToken);

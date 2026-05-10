@@ -8,6 +8,5 @@ namespace Application.Models.Output
         public required string ChatName { get; init; }
         public required string? ChatImage { get; init; }
         public required uint MembersCount { get; init; }
-        public required ChatType ChatType { get; init; }
     }
 }
