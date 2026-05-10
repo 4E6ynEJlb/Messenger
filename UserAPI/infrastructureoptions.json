@@ -1,0 +1,11 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "User ID=user_web_api;Password=user_web_api_password;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;" ////
+  },
+  "MinioOptions": {
+    "AccessKey": "minioadmin",
+    "SecretKey": "minioadmin",
+    "Endpoint": "minio:9000",
+    "BucketName": "media"
+  }
+}
