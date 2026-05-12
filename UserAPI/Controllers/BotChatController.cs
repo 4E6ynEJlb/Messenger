@@ -4,12 +4,18 @@ using Application.Models.Output;
 using Domain.Models.Types;
 using Domain.Stores;
 using Infrastructure.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
+using UserAPI.Models;
 using UserAPI.Services.Interfaces;
 
 namespace UserAPI.Controllers
 {
+    /// <summary>
+    /// Only for not banned users
+    /// </summary>
+    [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
     public class BotChatController : ControllerBase
@@ -56,7 +62,7 @@ namespace UserAPI.Controllers
         }        
 
         /// <summary>
-        /// 
+        /// Call when user opens a chat
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
@@ -84,7 +90,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Call when user opens or scrolls the chat
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messagesSelectOptions"></param>
@@ -117,7 +123,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Call when you catch an update about a new or updated message
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
@@ -189,7 +195,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="sendingMessageBody"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
+        /// <returns>404 if chat is not belonging to current user or replying message not found</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -219,6 +225,13 @@ namespace UserAPI.Controllers
             return Ok(messageId);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="resendMessagesModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>404 if chat is not belonging to current user or user has no access to resending messages</returns>
+        /// <exception cref="NotImplementedException"></exception>
         [ProducesResponseType(typeof(Guid[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]

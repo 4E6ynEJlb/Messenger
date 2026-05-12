@@ -672,7 +672,7 @@ BEGIN
         RETURN null;
     END IF;
 
-    IF password_hash != sha256((user_password || replace(user_data.user_id :: text, '-', '_'))::bytea) THEN
+    IF v_password_hash != sha256((user_password || replace(user_data.user_id :: text, '-', '_'))::bytea) THEN
         RETURN null;
     END IF;
     RETURN user_data;
@@ -854,11 +854,11 @@ BEGIN
     PERFORM private.update_user_online_status(new_user_data.user_id);
 
     UPDATE private.users
-    SET first_name = coalesce(new_user_data.first_name, first_name),
-        last_name = coalesce(new_user_data.last_name, last_name),
-        tag = coalesce(new_user_data.tag, tag),
-        birth_date = coalesce(new_user_data.birth_date, birth_date),
-        bio = coalesce(new_user_data.bio, bio)
+    SET first_name = new_user_data.first_name,
+        last_name = new_user_data.last_name,
+        tag = new_user_data.tag,
+        birth_date = new_user_data.birth_date,
+        bio = new_user_data.bio
     WHERE user_id = new_user_data.user_id;
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;

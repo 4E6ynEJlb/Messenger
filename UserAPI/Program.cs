@@ -46,7 +46,9 @@ namespace UserAPI
             builder.Services.AddSwaggerGen(options =>
             {
                 options.ConfigureSwaggerGen();
-                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Documentation.xml"));
+                options.SupportNonNullableReferenceTypes();
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApiDocumentation.xml"));
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApplicationDocumentation.xml"));
             });
 
             builder.AddAuthBuilderExtension();

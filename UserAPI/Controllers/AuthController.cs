@@ -19,7 +19,7 @@ namespace UserAPI.Controllers
             _refreshTokenStore = refreshTokenStore;
         }
         /// <summary>
-        /// 
+        /// After call check user role in jwt. If user is banned, role will be "BannedUser", else "User".
         /// </summary>
         /// <param name="credentials"></param>
         /// <param name="isRemembering">true = longer expiration</param>
@@ -79,7 +79,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Use for getting new jwt when the old one is expired. After call check user role in jwt. If user is banned, role will be "BannedUser", else "User"
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>jwt in response, refresh in cookies</returns>
@@ -106,9 +106,13 @@ namespace UserAPI.Controllers
             string role = ban ? Roles.BANNED_USER : Roles.USER;
             return Ok(JwtHelper.GenerateJwtToken(u.Value, role));
         }
-
+        
+        /// <summary>
+        /// After call delete jwt token and go to auth page
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
-        [ProducesResponseType(401)]
         [HttpPost("[action]")]
         public async Task<IActionResult> Logout(CancellationToken cancellationToken)
         {

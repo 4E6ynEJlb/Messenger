@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	<DocumentationFile>C:\Users\CyberNit\Desktop\Messenger\UserAPI\bin\Debug\net8.0\ApplicationDocumentation.xml</DocumentationFile>
   </PropertyGroup>
 
 </Project>
