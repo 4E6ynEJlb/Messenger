@@ -7,7 +7,7 @@
     <UserSecretsId>7e2a5834-f093-462b-82ba-773e0a0f244d</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <DocumentationFile>D:\Messenger\UserAPI\bin\Debug\net8.0\Documentation.xml</DocumentationFile>
+    <DocumentationFile>C:\Users\CyberNit\Desktop\Messenger\UserAPI\bin\Debug\net8.0\ApiDocumentation.xml</DocumentationFile>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 

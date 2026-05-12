@@ -3,8 +3,6 @@ using Dapper;
 using Domain.Models.Types;
 using Infrastructure.Database;
 using Infrastructure.Storage;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaintenanceAPI.Controllers
@@ -53,8 +51,8 @@ namespace MaintenanceAPI.Controllers
         [ProducesResponseType(typeof(MediaInfo), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [HttpGet("[action]")]
-        public async Task<IActionResult> GetFileInfo(Guid id, CancellationToken cancellationToken)
+        [HttpGet("{id}/[action]")]
+        public async Task<IActionResult> Info(Guid id, CancellationToken cancellationToken)
         {
             await using var conn = await _connectionFactory.CreateConnectionAsync();
             const string sql =

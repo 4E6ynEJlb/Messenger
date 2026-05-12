@@ -18,6 +18,16 @@ namespace UserAPI.Controllers
         {
             _securityStore = securityStore;
         }
+
+        /// <summary>
+        /// Only for not banned users
+        /// </summary>
+        /// <param name="chatType"></param>
+        /// <param name="chatId"></param>
+        /// <param name="messageId"></param>
+        /// <param name="comment"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>404 if message not found</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -30,6 +40,13 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Only for not banned users
+        /// </summary>
+        /// <param name="reportedUserId"></param>
+        /// <param name="comment"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -42,6 +59,13 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Only for not banned users
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="comment"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -54,6 +78,13 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Only for not banned users
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="comment"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -66,6 +97,13 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// For banned or not banned users
+        /// </summary>
+        /// <param name="adminId"></param>
+        /// <param name="comment"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [Authorize(Policy = Policies.ANY_USER_POLICY)]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]

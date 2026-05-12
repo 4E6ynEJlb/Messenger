@@ -12,6 +12,9 @@ using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
+    /// <summary>
+    /// Only for not banned users with some excepted endpoints
+    /// </summary>
     [Authorize(Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
@@ -26,7 +29,7 @@ namespace UserAPI.Controllers
             _objectStorage = objectStorage;
         }
         /// <summary>
-        /// current user info by id from jwt
+        /// current user info by id from jwt. Available for banned and not banned users
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
@@ -146,7 +149,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// use if current user is banned
+        /// use if current user is banned. Only for banned users
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
@@ -174,7 +177,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Call for chats list of current user
         /// </summary>
         /// <param name="pageOptions">all options values >= 1</param>
         /// <param name="cancellationToken">Cancellation token.</param>
@@ -307,7 +310,7 @@ namespace UserAPI.Controllers
         /// <summary>
         /// deletes current user's account
         /// </summary>
-        /// <param name="password">manually entered encrypted password</param>
+        /// <param name="password">manually entered password</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]

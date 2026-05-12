@@ -12,6 +12,9 @@ using UserAPI.Services.Interfaces;
 
 namespace UserAPI.Controllers
 {
+    /// <summary>
+    /// Only for not banned users
+    /// </summary>
     [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
@@ -59,7 +62,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Call when user opens or scrolls the chat
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messagesSelectOptions"></param>
@@ -92,7 +95,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Call when you catch an update about a new or updated message
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="messageId"></param>
@@ -164,7 +167,7 @@ namespace UserAPI.Controllers
         /// </summary>
         /// <param name="sendingMessageBody"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>404 if chat is not belonging to current user or user has no access to replying or resending message</returns>
+        /// <returns>404 if chat is not belonging to current user or replying message not found</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -195,6 +198,12 @@ namespace UserAPI.Controllers
             return Ok(messageId);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="resendMessagesModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>404 if chat is not belonging to current user or user has no access to resending messages</returns>
         [ProducesResponseType(typeof(Guid[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -222,7 +231,7 @@ namespace UserAPI.Controllers
         }
 
         /// <summary>
-        /// call, when user is typing a message
+        /// call, when user is typing a message with 5s timeout
         /// </summary>
         /// <param name="chatId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
@@ -330,7 +339,7 @@ namespace UserAPI.Controllers
         /// <param name="chatId"></param>
         /// <param name="mediaLink"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>404 if chat or message is not belonging to current user</returns>
+        /// <returns>404 if chat or message is not belonging to current user, 403 if message is resend</returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
@@ -341,7 +350,7 @@ namespace UserAPI.Controllers
         {
             Guid mediaId = Guid.Parse(mediaLink.Split('/').Last());
             await _personalChatStore.DeleteFileFromMessageAsync(chatId, mediaId, HttpContext.GetUserId(), cancellationToken);
-            await _updatesService.FileDeleted(chatId, mediaLink,
+            await _updatesService.FileDeleted(chatId, mediaLink, chatId,
                 [
                 HttpContext.GetUserId(),
                 await _personalChatStore.GetUserIdByChatIdAsync(chatId, HttpContext.GetUserId(), cancellationToken)

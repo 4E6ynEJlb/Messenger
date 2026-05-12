@@ -11,6 +11,9 @@ using UserAPI.Models;
 
 namespace UserAPI.Controllers
 {
+    /// <summary>
+    /// Only for not banned users
+    /// </summary>
     [Authorize(Policy = Policies.USER_POLICY)]
     [Route("[controller]")]
     [ApiController]
@@ -44,6 +47,12 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Searches bot by its name or its part, length >= 3 chars
+        /// </summary>
+        /// <param name="botName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(Bot), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -84,6 +93,11 @@ namespace UserAPI.Controllers
             return Ok(bot);
         }
 
+        /// <summary>
+        /// Gets list of bots created by current user
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(Bot[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -105,6 +119,12 @@ namespace UserAPI.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Gets bot token only by its owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(BotToken), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -115,12 +135,19 @@ namespace UserAPI.Controllers
             var token = await _botControlStore.GetBotTokenAsync(botId, HttpContext.GetUserId(), cancellationToken);
             BotToken botToken = new BotToken
             {
-                TokenHash = token.TokenHash,
+                Token = Convert.ToBase64String(token.TokenHash),
                 TokenVersion = token.TokenVersion
             };
             return Ok(botToken);
         }
 
+        /// <summary>
+        /// Call when user opens bot chat page to get list of commands 
+        /// with arguments for this bot or when owner opens bot commands configuration
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(Application.Models.Output.BotCommandInfo[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -145,6 +172,13 @@ namespace UserAPI.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Gets connections to bot with info about IP address. 
+        /// Available only for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(BotConnection[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -162,6 +196,12 @@ namespace UserAPI.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="form"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Created bot id</returns>
         [ProducesResponseType(typeof(Guid), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -184,6 +224,14 @@ namespace UserAPI.Controllers
             return Ok(botId);
         }
 
+        /// <summary>
+        /// Creates command for bot. Available only for bot owner.
+        /// Commands should be shown in bot chat as tips for users
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="addCommandModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Created command id</returns>
         [ProducesResponseType(typeof(uint), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -195,6 +243,14 @@ namespace UserAPI.Controllers
             return Ok(commandId);
         }
 
+        /// <summary>
+        /// Creates command argument for command. Available only for bot owner. 
+        /// Arguments should be shown in bot chat as tips for users after they enter command with prefix
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="addArgumentModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>Created argument id</returns>
         [ProducesResponseType(typeof(uint), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -206,6 +262,13 @@ namespace UserAPI.Controllers
             return Ok(argumentId);
         }
 
+        /// <summary>
+        /// Available for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="form"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -227,6 +290,12 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Generates new bot token and invalidates old one. Available only for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>New token</returns>
         [ProducesResponseType(typeof(BotToken), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -237,12 +306,19 @@ namespace UserAPI.Controllers
             var botToken = await _botControlStore.RegenerateBotTokenAsync(botId, HttpContext.GetUserId(), cancellationToken);
             BotToken result = new BotToken
             {
-                TokenHash = botToken.TokenHash,
+                Token = Convert.ToBase64String(botToken.TokenHash),
                 TokenVersion = botToken.TokenVersion
             };
             return Ok(result);
         }
 
+        /// <summary>
+        /// Available only for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="updateCommandModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -254,6 +330,13 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Available only for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="updateArgumentModel"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -265,6 +348,12 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Available only for bot owner
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -276,6 +365,14 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Available only for bot owner. When command is deleted, 
+        /// all commands with greater id should decrease their id by 1
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="commandId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -287,6 +384,15 @@ namespace UserAPI.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Available only for bot owner. When argument is deleted, 
+        /// all arguments with greater id for this command should decrease their id by 1
+        /// </summary>
+        /// <param name="botId"></param>
+        /// <param name="commandId"></param>
+        /// <param name="argumentId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]

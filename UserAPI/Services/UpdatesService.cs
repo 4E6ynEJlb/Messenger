@@ -28,9 +28,9 @@ namespace UserAPI.Services
             await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("MessageDeleted", chatId, messageId, chatType, cancellationToken);
         }
         
-        public async Task FileDeleted(Guid chatId, string file, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
+        public async Task FileDeleted(Guid chatId, string file, Guid messageId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("FileDeleted", chatId, file, chatType, cancellationToken);
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("FileDeleted", chatId, file, messageId, chatType, cancellationToken);
         }
 
         public async Task ChatDeleted(Guid chatId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
@@ -41,6 +41,11 @@ namespace UserAPI.Services
         public async Task UserIsTyping(Guid chatId, Guid typingUserId, Guid[] destinationUserId, ChatType chatType, CancellationToken cancellationToken)
         {
             await _updatesHub.Clients.Users(destinationUserId.Select(u => u.ToString()).ToArray()).SendAsync("UserIsTyping", chatId, typingUserId, chatType, cancellationToken);
+        }
+
+        public async Task BotButtonsUpdated(Guid chatId, Guid userId, CancellationToken cancellationToken)
+        {
+            await _updatesHub.Clients.User(userId.ToString()).SendAsync("BotButtonsUpdated", chatId, cancellationToken);
         }
     }
 }
