@@ -1,4 +1,4 @@
-﻿namespace Application.Models.Internal
+﻿namespace Application.Models.Output
 {
     /// <summary>
     /// Information about bot access token

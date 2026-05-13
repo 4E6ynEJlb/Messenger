@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
 using UserAPI.Models;
-using UserAPI.Services.Interfaces;
+using Application.Services.Interfaces;
 
 namespace UserAPI.Controllers
 {

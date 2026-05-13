@@ -8,4 +8,10 @@
 	<DocumentationFile>C:\Users\CyberNit\Desktop\Messenger\UserAPI\bin\Debug\net8.0\ApplicationDocumentation.xml</DocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="9.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
+  </ItemGroup>
+
 </Project>

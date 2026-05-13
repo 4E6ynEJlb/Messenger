@@ -3,7 +3,7 @@ using UserAPI.Extensions;
 using Domain.Stores;
 using Persistence.Repositories;
 using UserAPI.Services;
-using UserAPI.Services.Interfaces;
+using Application.Services.Interfaces;
 using UserAPI.Hubs;
 
 namespace UserAPI

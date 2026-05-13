@@ -1,7 +1,7 @@
 ﻿using Application.Models.Internal.Constants;
 using Microsoft.AspNetCore.SignalR;
 using UserAPI.Hubs;
-using UserAPI.Services.Interfaces;
+using Application.Services.Interfaces;
 
 namespace UserAPI.Services
 {
