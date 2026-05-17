@@ -246,7 +246,7 @@ namespace UserAPI.Controllers
         /// <param name="auditOptions">page and page size >=1</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>400 if invalid options, 403 if not owner/admin</returns>
-        [ProducesResponseType(typeof(PublicChatAuditRecord), 200)]
+        [ProducesResponseType(typeof(PublicChatAuditRecord[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
