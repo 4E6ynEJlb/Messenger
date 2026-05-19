@@ -745,7 +745,11 @@ $$
 $$
 LANGUAGE sql;
 
-CREATE OR REPLACE FUNCTION sch_user.get_user_chats(user_id uuid, page dom_positive_int, page_size dom_positive_int)--profile
+CREATE OR REPLACE FUNCTION sch_user.get_user_chats(
+    user_id uuid,
+    page dom_positive_int,
+    page_size dom_positive_int
+)
 RETURNS SETOF chat_information
 SECURITY DEFINER
 SET search_path = sch_user, public, private
@@ -753,65 +757,145 @@ AS
 $$
 SELECT private.update_user_online_status(user_id);
 
-SELECT chat_id, chat_name, coalesce(new_messages_count, 0), chat_image, chat_type
+SELECT
+    chat_id,
+    chat_name,
+    COALESCE(new_messages_count, 0),
+    chat_image,
+    chat_type
 FROM (
-    SELECT pcm1.chat_id chat_id, coalesce(concat(users.first_name, ' ', coalesce(users.last_name, '')), 'Deleted user') chat_name, nmc.new_messages_count, users.avatar chat_image, 'Personal' :: en_chat_type chat_type, lmsa.sent_at
+    -- PERSONAL CHATS
+    SELECT
+        pcm1.chat_id,
+        COALESCE(
+            CONCAT(users.first_name, ' ', COALESCE(users.last_name, '')),
+            'Deleted user'
+        ) AS chat_name,
+        nmc.new_messages_count,
+        users.avatar AS chat_image,
+        'Personal'::en_chat_type AS chat_type,
+        lmsa.sent_at
     FROM private.personal_chats_members pcm1
-    LEFT JOIN private.personal_chats_members pcm2 ON pcm1.chat_id = pcm2.chat_id AND pcm1.user_id != pcm2.user_id
-    LEFT JOIN private.users ON pcm2.user_id = users.user_id  --информация о пользователях-адресатах
+
+    LEFT JOIN private.personal_chats_members pcm2
+        ON pcm1.chat_id = pcm2.chat_id
+       AND pcm1.user_id != pcm2.user_id
+
+    LEFT JOIN private.users
+        ON pcm2.user_id = users.user_id
+
     JOIN (
-        SELECT DISTINCT ON (chat_id) chat_id, sent_at
+        SELECT DISTINCT ON (chat_id)
+            chat_id,
+            sent_at
         FROM private.personal_messages
-        ORDER BY chat_id, sent_at DESC) lmsa ON lmsa.chat_id = pcm1.chat_id    --время отправки последнего сообщения в чате
+        ORDER BY chat_id, sent_at DESC
+    ) lmsa
+        ON lmsa.chat_id = pcm1.chat_id
+
     LEFT JOIN (
-        SELECT count(message_id) new_messages_count, personal_chats_members.chat_id
-        FROM private.personal_messages
-        JOIN private.personal_chats_members ON personal_messages.chat_id = personal_chats_members.chat_id AND author = personal_chats_members.user_id
-        WHERE sent_at > was_in_chat AND personal_messages.author != get_user_chats.user_id
-        GROUP BY personal_chats_members.chat_id) nmc ON pcm1.chat_id = nmc.chat_id --количество новых сообщений в чатах
+        SELECT
+            pcm.chat_id,
+            COUNT(pm.message_id) AS new_messages_count
+        FROM private.personal_chats_members pcm
+        JOIN private.personal_messages pm
+            ON pm.chat_id = pcm.chat_id
+        WHERE pcm.user_id = get_user_chats.user_id
+          AND pm.sent_at > pcm.was_in_chat
+          AND pm.author != get_user_chats.user_id
+        GROUP BY pcm.chat_id
+    ) nmc
+        ON pcm1.chat_id = nmc.chat_id
+
     WHERE pcm1.user_id = get_user_chats.user_id
 
     UNION ALL
 
-    SELECT chats_with_user.chat_id chat_id, chats_with_user.chat_name chat_name, nmc.new_messages_count, chats_with_user.avatar chat_image, 'Public' :: en_chat_type chat_type, lmsa.sent_at
+    -- PUBLIC CHATS
+    SELECT
+        chats_with_user.chat_id,
+        chats_with_user.chat_name,
+        nmc.new_messages_count,
+        chats_with_user.avatar AS chat_image,
+        'Public'::en_chat_type AS chat_type,
+        lmsa.sent_at
     FROM (
         SELECT public_chats.*
         FROM private.public_chats
-        JOIN private.public_chats_members ON public_chats.chat_id = public_chats_members.chat_id
-        WHERE get_user_chats.user_id = public_chats_members.user_id) chats_with_user    --чаты с текущим пользователем
+        JOIN private.public_chats_members
+            ON public_chats.chat_id = public_chats_members.chat_id
+        WHERE get_user_chats.user_id = public_chats_members.user_id
+    ) chats_with_user
+
     JOIN (
-        SELECT DISTINCT ON (chat_id) chat_id, sent_at
+        SELECT DISTINCT ON (chat_id)
+            chat_id,
+            sent_at
         FROM private.public_messages
-        ORDER BY chat_id, sent_at DESC) lmsa ON lmsa.chat_id = chats_with_user.chat_id    --время отправки последнего сообщения в чате
+        ORDER BY chat_id, sent_at DESC
+    ) lmsa
+        ON lmsa.chat_id = chats_with_user.chat_id
+
     LEFT JOIN (
-        SELECT count(message_id) new_messages_count, public_chats_members.chat_id
-        FROM private.public_messages
-        JOIN private.public_chats_members ON public_messages.chat_id = public_chats_members.chat_id AND author = public_chats_members.user_id
-        WHERE sent_at > was_in_chat AND author != get_user_chats.user_id
-        GROUP BY public_chats_members.chat_id) nmc ON chats_with_user.chat_id = nmc.chat_id --количество новых сообщений в чатах
+        SELECT
+            pcm.chat_id,
+            COUNT(pm.message_id) AS new_messages_count
+        FROM private.public_chats_members pcm
+        JOIN private.public_messages pm
+            ON pm.chat_id = pcm.chat_id
+        WHERE pcm.user_id = get_user_chats.user_id
+          AND pm.sent_at > pcm.was_in_chat
+          AND pm.author != get_user_chats.user_id
+        GROUP BY pcm.chat_id
+    ) nmc
+        ON chats_with_user.chat_id = nmc.chat_id
 
     UNION ALL
 
-    SELECT bc.chat_id, coalesce(b.name, 'Deleted bot') AS chat_name, nmc.new_messages_count, b.avatar AS chat_image, 'Bot'::en_chat_type AS chat_type, lmsa.sent_at
+    -- BOT CHATS
+    SELECT
+        bc.chat_id,
+        COALESCE(b.name, 'Deleted bot') AS chat_name,
+        nmc.new_messages_count,
+        b.avatar AS chat_image,
+        'Bot'::en_chat_type AS chat_type,
+        lmsa.sent_at
     FROM private.bot_chats bc
-    LEFT JOIN private.bots b ON b.bot_id = bc.bot_id
+
+    LEFT JOIN private.bots b
+        ON b.bot_id = bc.bot_id
+
     JOIN (
-        SELECT DISTINCT ON (chat_id) chat_id, sent_at
+        SELECT DISTINCT ON (chat_id)
+            chat_id,
+            sent_at
         FROM private.bot_messages
-        ORDER BY chat_id, sent_at DESC) lmsa ON lmsa.chat_id = bc.chat_id
+        ORDER BY chat_id, sent_at DESC
+    ) lmsa
+        ON lmsa.chat_id = bc.chat_id
+
     LEFT JOIN (
-        SELECT count(bm.message_id) AS new_messages_count, bc2.chat_id
-        FROM private.bot_messages bm
-        JOIN private.bot_chats bc2 ON bm.chat_id = bc2.chat_id
-        WHERE bm.sent_at > bc2.was_in_chat
-        GROUP BY bc2.chat_id) nmc ON bc.chat_id = nmc.chat_id
+        SELECT
+            bc2.chat_id,
+            COUNT(bm.message_id) AS new_messages_count
+        FROM private.bot_chats bc2
+        JOIN private.bot_messages bm
+            ON bm.chat_id = bc2.chat_id
+        WHERE bc2.user_id = get_user_chats.user_id
+          AND bm.sent_at > bc2.was_in_chat
+        GROUP BY bc2.chat_id
+    ) nmc
+        ON bc.chat_id = nmc.chat_id
+
     WHERE bc.user_id = get_user_chats.user_id
-    ) unsorted_result
+
+) unsorted_result
 ORDER BY sent_at DESC
 OFFSET (page - 1) * page_size
 LIMIT page_size;
 $$
 LANGUAGE sql;
+
 
 CREATE OR REPLACE FUNCTION sch_user.update_user_auth(user_id uuid, user_current_password text,
                                   user_new_login dom_auth_string DEFAULT NULL, user_new_password dom_auth_string DEFAULT NULL)
@@ -827,14 +911,14 @@ BEGIN
     PERFORM private.update_user_online_status(user_id);
 
     IF user_new_password IS NOT NULL THEN
-        new_salty_user_password = user_new_password || replace(user_id, '-', '_');
+        new_salty_user_password = user_new_password || replace(user_id :: text, '-', '_');
     END IF;
 
     UPDATE private.users
     SET login_hash = coalesce(sha256(user_new_login::bytea), login_hash),
         password_hash = coalesce(sha256(new_salty_user_password::bytea), password_hash)
-    WHERE user_id = update_user_auth.user_id
-      AND password_hash = sha256((user_current_password || replace(user_id, '-', '_'))::bytea);
+    WHERE users.user_id = update_user_auth.user_id
+      AND password_hash = sha256((user_current_password || replace(update_user_auth.user_id :: text, '-', '_'))::bytea);
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     RETURN affected_rows;
@@ -916,7 +1000,7 @@ BEGIN
         ORDER BY uploaded_at DESC
         LIMIT 1
         )
-    WHERE user_id = delete_user_avatar.user_id;
+    WHERE users.user_id = delete_user_avatar.user_id;
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     RETURN affected_rows;
@@ -973,7 +1057,7 @@ AS
 $$
     SELECT bot_id, b.name, tag, avatar, description, is_enabled
     FROM private.bots b
-    WHERE b.name LIKE '%' || get_bot_by_name.name || '%';
+    WHERE b.name = get_bot_by_name.name;
 $$
 LANGUAGE sql;
 
@@ -1442,9 +1526,9 @@ AS
 $$
     SELECT private.update_user_online_status(getting_by);
 
-    UPDATE private.personal_chats_members
+    UPDATE private.personal_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = get_messages_from_personal_chat.chat_id
+    WHERE pcm.chat_id = get_messages_from_personal_chat.chat_id
       AND user_id = getting_by;
 
     SELECT pm.message_id, author, message_text, sent_at, is_updated, updated_at, pm.reply_to, pm.resent_from, pm.is_bot_resend,
@@ -1517,11 +1601,11 @@ DECLARE
     initializing_chat_id uuid = gen_random_uuid();
     chat_id_converted_to_text text = replace(initializing_chat_id::text, '-', '_');
     messages_table_name text = 'private.personal_messages_' || chat_id_converted_to_text;
-    messages_chat_id_fk_name text = 'personal_messages_' || chat_id_converted_to_text || '_chat_id_fkey';
-    messages_reply_to_fk_name text = 'personal_messages_' || chat_id_converted_to_text || '_reply_to_fkey';
+    messages_chat_id_fk_name text = 'pem_' || chat_id_converted_to_text || '_chat_id_fkey';
+    messages_reply_to_fk_name text = 'pem_' || chat_id_converted_to_text || '_reply_to_fkey';
     attachments_table_name text = 'private.personal_messages_attachments_' || chat_id_converted_to_text;
-    attachments_chat_id_message_id_fk_name text = 'personal_messages_attachments_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
-    attachments_attachment_id_fk_name text = 'personal_messages_attachments_' || chat_id_converted_to_text || '_attachment_id_fkey';
+    attachments_chat_id_message_id_fk_name text = 'pema_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
+    attachments_attachment_id_fk_name text = 'pema_' || chat_id_converted_to_text || '_attachment_id_fkey';
 BEGIN
     PERFORM private.update_user_online_status(first_owner);
 
@@ -1549,9 +1633,9 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || messages_table_name ||
             ' ADD CONSTRAINT ' || messages_chat_id_fk_name ||
             ' FOREIGN KEY (chat_id, author) REFERENCES private.personal_chats_members(chat_id, user_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
-            ' FOREIGN KEY (reply_to) REFERENCES ' || messages_table_name || '(message_id)' ||
+            ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
             ' ON DELETE SET NULL ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
@@ -1561,7 +1645,7 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || attachments_table_name ||
             ' ADD CONSTRAINT ' || attachments_chat_id_message_id_fk_name ||
             ' FOREIGN KEY (chat_id, message_id) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || attachments_attachment_id_fk_name ||
             ' FOREIGN KEY (attachment_id) REFERENCES private.media(media_id)' ||
             ' ON UPDATE CASCADE';
@@ -1583,9 +1667,9 @@ DECLARE
 BEGIN
     PERFORM private.update_user_online_status(send_personal_message.author);
 
-    UPDATE private.personal_chats_members
+    UPDATE private.personal_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = send_personal_message.chat_id
+    WHERE pcm.chat_id = send_personal_message.chat_id
       AND user_id = send_personal_message.author;
 
     IF exists(
@@ -1639,9 +1723,9 @@ DECLARE
 BEGIN
     PERFORM private.update_user_online_status(resend_to_private_messages.author);
 
-    UPDATE private.personal_chats_members
+    UPDATE private.personal_chats_members pcm
     SET was_in_chat = current_timestamp
-    WHERE chat_id = resend_to_private_messages.chat_id
+    WHERE pcm.chat_id = resend_to_private_messages.chat_id
       AND user_id = resend_to_private_messages.author;
 
     IF exists(
@@ -2054,9 +2138,9 @@ AS
 $$
     SELECT private.update_user_online_status(getting_by);
 
-    UPDATE private.public_chats_members
+    UPDATE private.public_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = get_messages_from_public_chat.chat_id
+    WHERE pcm.chat_id = get_messages_from_public_chat.chat_id
       AND user_id = getting_by;
 
     SELECT pm.message_id, author, message_text, sent_at, is_updated, updated_at, pm.reply_to, pm.resent_from, pm.is_bot_resend,
@@ -2084,9 +2168,9 @@ AS
 $$
     SELECT private.update_user_online_status(getting_by);
 
-    UPDATE private.public_chats_members
+    UPDATE private.public_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = get_public_message.chat_id
+    WHERE pcm.chat_id = get_public_message.chat_id
       AND user_id = getting_by;
 
     SELECT pm.message_id, author, message_text, sent_at, is_updated, updated_at, pm.reply_to, pm.resent_from, pm.is_bot_resend,
@@ -2136,22 +2220,22 @@ DECLARE
     initializing_chat_id uuid = gen_random_uuid();
     chat_id_converted_to_text text = replace(initializing_chat_id::text, '-', '_');
     members_table_name text = 'private.public_chats_members_' || chat_id_converted_to_text;
-    members_fk_to_chats_name text = 'public_chats_members_' || chat_id_converted_to_text || '_chat_id_fkey';
-    members_fk_to_users_name text = 'public_chats_members_' || chat_id_converted_to_text || '_user_id_fkey';
+    members_fk_to_chats_name text = 'pucm_' || chat_id_converted_to_text || '_chat_id_fkey';
+    members_fk_to_users_name text = 'pucm_' || chat_id_converted_to_text || '_user_id_fkey';
     banned_table_name text = 'private.public_chats_banned_users_' || chat_id_converted_to_text;
-    banned_fk_to_chats_members_name text = 'public_chats_banned_users_' || chat_id_converted_to_text || '_chat_id_member_id_fkey';
+    banned_fk_to_chats_members_name text = 'pucbu_' || chat_id_converted_to_text || '_chat_id_member_id_fkey';
     banned_fk_to_users_name text = 'public_chats_banned_users_' || chat_id_converted_to_text || '_user_id_fkey';
     messages_table_name text = 'private.public_messages_' || chat_id_converted_to_text;
-    messages_fk_to_chats_name text = 'public_messages_' || chat_id_converted_to_text || '_chat_id_fkey';
-    messages_fk_to_users_name text = 'public_messages_' || chat_id_converted_to_text || '_user_id_fkey';
-    messages_reply_to_fk_name text = 'public_messages_' || chat_id_converted_to_text || '_reply_to_fkey';
+    messages_fk_to_chats_name text = 'pum_' || chat_id_converted_to_text || '_chat_id_fkey';
+    messages_fk_to_users_name text = 'pum_' || chat_id_converted_to_text || '_user_id_fkey';
+    messages_reply_to_fk_name text = 'pum_' || chat_id_converted_to_text || '_reply_to_fkey';
     attachments_table_name text = 'private.public_messages_attachments_' || chat_id_converted_to_text;
-    attachments_fk_to_messages_name text = 'public_messages_attachments_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
-    attachments_fk_to_media_name text = 'public_messages_attachments_' || chat_id_converted_to_text || '_media_id_fkey';
+    attachments_fk_to_messages_name text = 'puma_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
+    attachments_fk_to_media_name text = 'puma_' || chat_id_converted_to_text || '_media_id_fkey';
     audit_table_name text = 'private.public_chats_audit_logs_' || chat_id_converted_to_text;
-    audit_fk_to_chats_name text = 'public_chats_audit_logs_' || chat_id_converted_to_text || '_chat_id_fkey';
-    audit_fk_to_src_user_id_name text = 'public_chats_audit_logs_' || chat_id_converted_to_text || 'source_user_id_fkey';
-    audit_fk_to_dest_user_id_name text = 'public_chats_audit_logs_' || chat_id_converted_to_text || 'destination_user_id_fkey';
+    audit_fk_to_chats_name text = 'pucal_' || chat_id_converted_to_text || '_chat_id_fkey';
+    audit_fk_to_src_user_id_name text = 'pucal_' || chat_id_converted_to_text || 'source_user_id_fkey';
+    audit_fk_to_dest_user_id_name text = 'pucal_' || chat_id_converted_to_text || 'destination_user_id_fkey';
 BEGIN
     IF (avatar IS NOT NULL) THEN
         INSERT INTO private.media (media_id, file_name, content_type)
@@ -2188,12 +2272,12 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || messages_table_name ||
             ' ADD CONSTRAINT ' || messages_fk_to_chats_name ||
             ' FOREIGN KEY (chat_id) REFERENCES private.public_chats(chat_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_fk_to_users_name ||
             ' FOREIGN KEY (author) REFERENCES private.users(user_id)' ||
-            ' ON DELETE SET NULL ON UPDATE CASCADE' ||
+            ' ON DELETE SET NULL ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
-            ' FOREIGN KEY (reply_to) REFERENCES ' || messages_table_name || '(message_id)' ||
+            ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
             ' ON DELETE SET NULL ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
@@ -2203,7 +2287,7 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || attachments_table_name ||
             ' ADD CONSTRAINT ' || attachments_fk_to_messages_name ||
             ' FOREIGN KEY (chat_id, message_id) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || attachments_fk_to_media_name ||
             ' FOREIGN KEY (attachment_id) REFERENCES private.media(media_id)' ||
             ' ON UPDATE CASCADE';
@@ -2215,10 +2299,10 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || audit_table_name ||
             ' ADD CONSTRAINT ' || audit_fk_to_chats_name ||
             ' FOREIGN KEY (chat_id) REFERENCES private.public_chats(chat_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || audit_fk_to_src_user_id_name ||
             ' FOREIGN KEY (source_user_id) REFERENCES private.users(user_id)' ||
-            ' ON DELETE SET NULL ON UPDATE CASCADE' ||
+            ' ON DELETE SET NULL ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || audit_fk_to_dest_user_id_name ||
             ' FOREIGN KEY (destination_user_id) REFERENCES private.users(user_id)' ||
             ' ON DELETE SET NULL ON UPDATE CASCADE';
@@ -2295,9 +2379,9 @@ BEGIN
         RAISE EXCEPTION 'You must be a member of this public chat.' USING ERRCODE = '42501';
     END IF;
 
-    UPDATE private.public_chats_members
+    UPDATE private.public_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = send_public_message.chat_id
+    WHERE pcm.chat_id = send_public_message.chat_id
       AND user_id = send_public_message.author;
 
     IF exists(
@@ -2370,9 +2454,9 @@ BEGIN
         RAISE EXCEPTION 'You must be a member of this public chat.' USING ERRCODE = '42501';
     END IF;
 
-    UPDATE private.public_chats_members
+    UPDATE private.public_chats_members pcm
     SET was_in_chat = current_timestamp
-    WHERE chat_id = resend_to_public_messages.chat_id
+    WHERE pcm.chat_id = resend_to_public_messages.chat_id
       AND user_id = resend_to_public_messages.author;
 
     IF exists(
@@ -3167,9 +3251,9 @@ AS
 $$
     SELECT private.update_user_online_status(getting_by);
 
-    UPDATE private.bot_chats
+    UPDATE private.bot_chats bc
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = get_bot_messages.chat_id
+    WHERE bc.chat_id = get_bot_messages.chat_id
       AND user_id = getting_by;
 
     SELECT bm.message_id, CASE WHEN bm.is_bot THEN bc.bot_id ELSE bc.user_id END AS author,
@@ -3196,9 +3280,9 @@ AS
 $$
     SELECT private.update_user_online_status(getting_by);
 
-    UPDATE private.bot_chats
+    UPDATE private.bot_chats bc
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = get_bot_message.chat_id
+    WHERE bc.chat_id = get_bot_message.chat_id
       AND user_id = getting_by;
 
     SELECT bm.message_id, CASE WHEN bm.is_bot THEN bc.bot_id ELSE bc.user_id END AS author,
@@ -3256,11 +3340,11 @@ DECLARE
     initializing_chat_id uuid = gen_random_uuid();
     chat_id_converted_to_text text = replace(initializing_chat_id::text, '-', '_');
     messages_table_name text = 'private.bot_messages_' || chat_id_converted_to_text;
-    messages_chat_id_fk_name text = 'bot_messages_' || chat_id_converted_to_text || '_chat_id_fkey';
-    messages_reply_to_fk_name text = 'bot_messages_' || chat_id_converted_to_text || '_reply_to_fkey';
+    messages_chat_id_fk_name text = 'bm_' || chat_id_converted_to_text || '_chat_id_fkey';
+    messages_reply_to_fk_name text = 'bm_' || chat_id_converted_to_text || '_reply_to_fkey';
     attachments_table_name text = 'private.bot_messages_attachments_' || chat_id_converted_to_text;
-    attachments_chat_id_message_id_fk_name text = 'bot_messages_attachments_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
-    attachments_attachment_id_fk_name text = 'bot_messages_attachments_' || chat_id_converted_to_text || '_attachment_id_fkey';
+    attachments_chat_id_message_id_fk_name text = 'bma_' || chat_id_converted_to_text || '_chat_id_message_id_fkey';
+    attachments_attachment_id_fk_name text = 'bma_' || chat_id_converted_to_text || '_attachment_id_fkey';
 BEGIN
     PERFORM private.update_user_online_status(user_id);
 
@@ -3283,9 +3367,9 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || messages_table_name ||
             ' ADD CONSTRAINT ' || messages_chat_id_fk_name ||
             ' FOREIGN KEY (chat_id) REFERENCES private.bot_chats(chat_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
-            ' FOREIGN KEY (reply_to) REFERENCES ' || messages_table_name || '(message_id)' ||
+            ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
             ' ON DELETE SET NULL ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
@@ -3295,7 +3379,7 @@ BEGIN
     EXECUTE 'ALTER TABLE ' || attachments_table_name ||
             ' ADD CONSTRAINT ' || attachments_chat_id_message_id_fk_name ||
             ' FOREIGN KEY (chat_id, message_id) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE CASCADE ON UPDATE CASCADE' ||
+            ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || attachments_attachment_id_fk_name ||
             ' FOREIGN KEY (attachment_id) REFERENCES private.media(media_id)' ||
             ' ON UPDATE CASCADE';
@@ -3317,9 +3401,9 @@ DECLARE
 BEGIN
     PERFORM private.update_user_online_status(author);
 
-    UPDATE private.bot_chats
+    UPDATE private.bot_chats bc
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = send_bot_message.chat_id
+    WHERE bc.chat_id = send_bot_message.chat_id
       AND user_id = author;
 
     IF exists(
@@ -3373,9 +3457,9 @@ DECLARE
 BEGIN
     PERFORM private.update_user_online_status(author);
 
-    UPDATE private.bot_chats
+    UPDATE private.bot_chats bc
     SET was_in_chat = current_timestamp
-    WHERE chat_id = resend_to_bot_messages.chat_id
+    WHERE bc.chat_id = resend_to_bot_messages.chat_id
       AND user_id = author;
 
     IF exists(
@@ -3513,6 +3597,38 @@ BEGIN
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     RETURN affected_rows;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sch_user.get_message_id_by_media(chat_id uuid, attachment_id uuid, chat_type en_chat_type)
+RETURNS uuid
+SECURITY DEFINER
+SET search_path = sch_user, public, private
+AS
+$$
+DECLARE
+    result uuid;
+BEGIN
+    CASE chat_type
+        WHEN 'Personal' THEN
+            SELECT pma.message_id INTO result
+            FROM private.personal_messages_attachments pma
+            WHERE pma.chat_id = get_message_id_by_media.chat_id
+              AND pma.attachment_id = get_message_id_by_media.attachment_id;
+        WHEN 'Public' THEN
+            SELECT pma.message_id INTO result
+            FROM private.public_messages_attachments pma
+            WHERE pma.chat_id = get_message_id_by_media.chat_id
+              AND pma.attachment_id = get_message_id_by_media.attachment_id;
+        WHEN 'Bot' THEN
+            SELECT bma.message_id INTO result
+            FROM private.bot_messages_attachments bma
+            WHERE bma.chat_id = get_message_id_by_media.chat_id
+              AND bma.attachment_id = get_message_id_by_media.attachment_id;
+    END CASE;
+
+    RETURN result;
 END;
 $$
 LANGUAGE plpgsql;

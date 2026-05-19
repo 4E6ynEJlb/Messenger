@@ -1,5 +1,7 @@
-﻿using Application.Models.Internal;
+﻿using Application.Models.Helpers;
+using Application.Models.Internal;
 using Application.Models.Internal.Constants;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Application.Models.Input
 {
@@ -8,6 +10,15 @@ namespace Application.Models.Input
     /// </summary>
     public record PublicChatOptions
     {
+        public PublicChatOptions() { }
+        [SetsRequiredMembers]
+        public PublicChatOptions(Domain.Models.Types.PublicChatOptions options, string mediaPrefix)
+        {
+            ChatName = options.ChatName;
+            Searchable = options.IsSearchable;
+            ChatImage = options.Avatar is not null ? $"{mediaPrefix}/{options.Avatar}" : null;
+            DefaultMemberRole = ChatRoleConverter.Convert(options.DefaultMemberRole);
+        }
         public required string ChatName { get; init; }
         /// <summary>
         /// If false then chat will not be visible in search results and users 

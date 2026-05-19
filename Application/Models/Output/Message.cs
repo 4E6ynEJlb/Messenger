@@ -1,4 +1,5 @@
 ﻿using Application.Models.Input;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Application.Models.Output
 {
@@ -7,6 +8,22 @@ namespace Application.Models.Output
     /// </summary>
     public record Message : UpdatingMessage
     {
+        public Message() { }
+        [SetsRequiredMembers]
+        public Message(Domain.Models.Types.Message message, string mediaPrefix, Guid chatId)
+        {
+            Author = message.Author;
+            SentAt = message.SentAt;
+            IsUpdated = message.IsUpdated;
+            UpdatedAt = message.UpdatedAt;
+            ReplyTo = message.ReplyTo;
+            ResentFrom = message.ResentFrom;
+            IsBotResend = message.IsBotResend;
+            AttachedMedia = message.AttachedMedia.Select(am => $"{mediaPrefix}/{am}").ToArray();
+            MessageId = message.MessageId;
+            ChatId = chatId;
+            MessageText = message.MessageText;
+        }
         /// <summary>
         /// Author user id
         /// </summary>

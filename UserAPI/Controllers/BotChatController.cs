@@ -260,7 +260,7 @@ namespace UserAPI.Controllers
         /// <summary>
         /// works like blocking a bot - user will not receive messages from it
         /// </summary>
-        /// <param name="botId"></param>
+        /// <param name="chatId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
@@ -268,16 +268,16 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> DisableBot(Guid botId, CancellationToken cancellationToken)
+        public async Task<IActionResult> DisableBot(Guid chatId, CancellationToken cancellationToken)
         {
-            await _botChatStore.DisableBotAsync(botId, HttpContext.GetUserId(), cancellationToken);
+            await _botChatStore.DisableBotAsync(HttpContext.GetUserId(), chatId, cancellationToken);
             return Ok();
         }
 
         /// <summary>
         /// unblocking bot
         /// </summary>
-        /// <param name="botId"></param>
+        /// <param name="chatId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [ProducesResponseType(200)]
@@ -285,9 +285,9 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPost("[action]")]
-        public async Task<IActionResult> EnableBot(Guid botId, CancellationToken cancellationToken)
+        public async Task<IActionResult> EnableBot(Guid chatId, CancellationToken cancellationToken)
         {
-            await _botChatStore.EnableBotAsync(botId, HttpContext.GetUserId(), cancellationToken);
+            await _botChatStore.EnableBotAsync(HttpContext.GetUserId(), chatId, cancellationToken);
             return Ok();
         }
 

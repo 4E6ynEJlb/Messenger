@@ -1,4 +1,6 @@
-﻿using Application.Models.Internal;
+﻿using Application.Models.Helpers;
+using Application.Models.Internal;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Application.Models.Output
 {
@@ -7,6 +9,15 @@ namespace Application.Models.Output
     /// </summary>
     public record PublicChatAuditRecord
     {
+        public PublicChatAuditRecord() { }
+        [SetsRequiredMembers]
+        public PublicChatAuditRecord(Domain.Models.Types.AuditLogRecord auditLogRecord)
+        {
+            UserId = auditLogRecord.SourceUserId;
+            TargetUserId = auditLogRecord.DestinationUserId;
+            ActionDate = auditLogRecord.ActionDatetime;
+            Action = AuditActionConverter.Convert(auditLogRecord.Action);
+        }
         /// <summary>
         /// Source user id. 
         /// For example if user A added user B to chat 

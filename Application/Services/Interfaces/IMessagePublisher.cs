@@ -4,6 +4,6 @@ namespace Application.Services.Interfaces
 {
     public interface IMessagePublisher
     {
-        public Task PublishAsync(BusMessage message, CancellationToken cancellationToken);
+        public Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T : BusMessage;
     }
 }

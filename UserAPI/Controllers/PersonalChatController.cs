@@ -348,7 +348,7 @@ namespace UserAPI.Controllers
         [HttpDelete("[action]")]
         public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink, CancellationToken cancellationToken)
         {
-            Guid mediaId = Guid.Parse(mediaLink.Split('/').Last());
+            Guid mediaId = Guid.Parse(mediaLink[(mediaPrefix.Length + 1)..]);
             await _personalChatStore.DeleteFileFromMessageAsync(chatId, mediaId, HttpContext.GetUserId(), cancellationToken);
             await _updatesService.FileDeleted(chatId, mediaLink, chatId,
                 [

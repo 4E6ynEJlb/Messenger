@@ -1,6 +1,6 @@
 ﻿using Application.Models.ConstantsAndExtensions;
-using Application.Models.ConstantsAndHelpers;
-using Application.Models.OptionsAndHelpers;
+using Application.Models.Internal.Constants;
+using Application.Models.Internal.Options;
 using Application.Models.Output;
 using Application.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +19,7 @@ namespace Application.Services.Implementations
             _database = connection.GetDatabase();
             _expiration = TimeSpan.FromSeconds(options.Value.MessagesExpirationSeconds);
         }
+
         public async Task<Message?> GetAsync(Guid messageId, Guid chatId, CancellationToken cancellationToken)
         {
             string key = $"{messageId}{chatId}";

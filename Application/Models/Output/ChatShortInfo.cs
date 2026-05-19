@@ -1,4 +1,7 @@
 ﻿using Application.Models.Internal.Constants;
+using Application.Models.OptionsAndHelpers;
+using Domain.Models.Types;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Application.Models.Output
 {
@@ -7,6 +10,16 @@ namespace Application.Models.Output
     /// </summary>
     public record ChatShortInfo
     {
+        public ChatShortInfo() { }
+        [SetsRequiredMembers]
+        public ChatShortInfo(ChatInformation chatInformation, string mediaPrefix)
+        {
+            ChatId = chatInformation.ChatId;
+            ChatType = ChatTypeConverter.Convert(chatInformation.ChatType);
+            ChatName = chatInformation.ChatName;
+            NewMessagesCount = chatInformation.NewMessagesCount;
+            ChatImage = chatInformation.ChatImage is not null ? $"{mediaPrefix}/{chatInformation.ChatImage}" : null;
+        }
         public required Guid ChatId { get; init; }
         public required ChatType ChatType { get; init; }
         public required string ChatName { get; init; }

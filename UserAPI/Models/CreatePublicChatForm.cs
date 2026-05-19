@@ -12,7 +12,7 @@ namespace UserAPI.Models
         /// If true then chat will be visible in search results
         /// </summary>
         public required bool Searchable { get; init; }
-        public required IFormFile? ChatImage { get; init; }
+        public IFormFile? ChatImage { get; init; }
         /// <summary>
         /// Role that will be applied to newcome chat members
         /// </summary>

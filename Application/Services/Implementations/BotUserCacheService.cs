@@ -1,6 +1,6 @@
 ﻿using Application.Models.ConstantsAndExtensions;
-using Application.Models.ConstantsAndHelpers;
-using Application.Models.OptionsAndHelpers;
+using Application.Models.Internal.Constants;
+using Application.Models.Internal.Options;
 using Application.Models.Output;
 using Application.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +19,7 @@ namespace Application.Services.Implementations
             _database = connection.GetDatabase();
             _expiration = TimeSpan.FromSeconds(options.Value.BotUserExpirationSeconds);
         }
+
         public async Task<Bot?> GetBotAsync(Guid id, CancellationToken cancellationToken)
         {
             RedisValue value = await _database.StringGetAsync(id.ToString());
@@ -41,7 +42,6 @@ namespace Application.Services.Implementations
             string valueString = value.ToString();
             if (JsonSerializerHelper.TryDeserialize(valueString, out User? user))
             { 
-                await _database.KeyExpireAsync(id.ToString(), _expiration);
                 return user; 
             }
             return null;

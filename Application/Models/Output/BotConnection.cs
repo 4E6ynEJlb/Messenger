@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using Domain.Models.Types;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 namespace Application.Models.Output
 {
@@ -7,6 +9,14 @@ namespace Application.Models.Output
     /// </summary>
     public record BotConnection
     {
+        public BotConnection() { }
+        [SetsRequiredMembers]
+        public BotConnection(BotConnectionLogRecord conn)
+        {
+            IPAddress = conn.IPAddress;
+            ConnectedAt = conn.ConnectedAt;
+            TokenVersion = conn.TokenVersion;
+        }
         /// <summary>
         /// IP address of the bot
         /// </summary>

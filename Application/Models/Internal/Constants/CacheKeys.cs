@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Models.ConstantsAndHelpers
+namespace Application.Models.Internal.Constants
 {
     public static class CacheKeys
     {

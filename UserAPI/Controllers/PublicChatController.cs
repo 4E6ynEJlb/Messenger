@@ -162,7 +162,7 @@ namespace UserAPI.Controllers
         /// <param name="chatId"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>id of users banned from chat, 403 if current user is not admin/owner, 404 if not a member</returns>
-        [ProducesResponseType(typeof(Guid[]), 200)]
+        [ProducesResponseType(typeof(Application.Models.Output.PublicChatBannedUser[]), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
@@ -246,7 +246,7 @@ namespace UserAPI.Controllers
         /// <param name="auditOptions">page and page size >=1</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>400 if invalid options, 403 if not owner/admin</returns>
-        [ProducesResponseType(typeof(PublicChatAuditRecord), 200)]
+        [ProducesResponseType(typeof(PublicChatAuditRecord[]), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
@@ -549,10 +549,10 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink, CancellationToken cancellationToken)
         {
             Guid mediaId = Guid.Parse(mediaLink.Replace($"{mediaPrefix}/", ""));
-            await _publicChatStore.DeleteFileFromMessageAsync(chatId, messageId, mediaId, HttpContext.GetUserId(), cancellationToken);
+            await _publicChatStore.DeleteFileFromMessageAsync(chatId, Guid.Empty, mediaId, HttpContext.GetUserId(), cancellationToken);
             await _updatesService.FileDeleted(chatId, mediaLink, chatId,
                 (await _publicChatStore.GetChatFullInfoAsync(chatId, HttpContext.GetUserId(), cancellationToken)).Members.Select(m => m.UserId).ToArray(),
                 ChatType.Group, cancellationToken);

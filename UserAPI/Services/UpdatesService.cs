@@ -7,8 +7,8 @@ namespace UserAPI.Services
 {
     public class UpdatesService : IUpdatesService
     {
-        private readonly UpdatesHub _updatesHub;
-        public UpdatesService(UpdatesHub updatesHub)
+        private readonly IHubContext<UpdatesHub> _updatesHub;
+        public UpdatesService(IHubContext<UpdatesHub> updatesHub)
         {
             _updatesHub = updatesHub;
         }

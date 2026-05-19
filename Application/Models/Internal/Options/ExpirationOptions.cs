@@ -1,4 +1,4 @@
-﻿namespace Application.Models.OptionsAndHelpers
+﻿namespace Application.Models.Internal.Options
 {
     public class ExpirationOptions
     {

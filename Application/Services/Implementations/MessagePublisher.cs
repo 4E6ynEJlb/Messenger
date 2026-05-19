@@ -11,7 +11,8 @@ namespace Application.Services.Implementations
         {
             _bus = bus;
         }
-        public async Task PublishAsync(BusMessage message, CancellationToken cancellationToken)
+
+        public async Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T : BusMessage
         {
             await _bus.Publish(message, cancellationToken);
         }
