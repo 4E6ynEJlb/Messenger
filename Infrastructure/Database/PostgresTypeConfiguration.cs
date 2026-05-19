@@ -35,9 +35,9 @@ namespace Infrastructure.Database
 
             public string TranslateMemberName(string clrName) => clrName switch
             {
-                nameof(EnChatType.PERSONAL) => "Personal",
-                nameof(EnChatType.PUBLIC) => "Public",
-                nameof(EnChatType.BOT) => "Bot",
+                nameof(EnChatType.Personal) => "Personal",
+                nameof(EnChatType.Public) => "Public",
+                nameof(EnChatType.Bot) => "Bot",
                 _ => clrName
             };
         }
@@ -48,7 +48,7 @@ namespace Infrastructure.Database
 
             public string TranslateMemberName(string clrName) => clrName switch
             {
-                nameof(EnPublicChatMemberRole.Owner) => "Creator",
+                nameof(EnPublicChatMemberRole.Creator) => "Creator",
                 _ => clrName
             };
         }

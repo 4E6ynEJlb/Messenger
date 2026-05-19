@@ -1,6 +1,6 @@
 {
   "ConnectionStrings": {
-    "DefaultConnection": "User ID={0};Password={1};Server=npgsql-container;Port=5432;Database={2};Pooling=true;"////
+    "DefaultConnection": "User ID=user_web_api;Password=user_web_api_password;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;" ////
   },
   "MinioOptions": {
     "AccessKey": "minioadmin",

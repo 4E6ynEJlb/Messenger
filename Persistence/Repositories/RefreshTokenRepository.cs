@@ -79,7 +79,7 @@ namespace Persistence.Repositories
             try
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql = "SELECT sch_user.validate_refresh_token(@token, @device_id, @user_id)";
+                const string sql = "SELECT sch_user.validate_refresh_token(@token :: varchar(44), @device_id, @user_id)";
                 return await conn.ExecuteScalarAsync<bool>(RepositoryExecution.Cmd(sql, new
                 {
                     token = refreshToken,

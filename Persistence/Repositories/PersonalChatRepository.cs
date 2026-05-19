@@ -133,6 +133,26 @@ namespace Persistence.Repositories
             }
         }
 
+        public async Task<Guid> GetMessageIdByMediaAsync(Guid chatId, Guid mediaId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
+                const string sql =
+                    "SELECT * FROM sch_user.get_message_id_by_media(@chat_id, @attachment_id, @chat_type)";
+                return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    attachment_id = mediaId,
+                    chat_type = EnChatType.Personal
+                }, cancellationToken)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
         public async Task<Message[]> GetMessagesAsync(Guid chatId, Guid gettingBy, uint messagesCount, DateTime sentBefore,
             CancellationToken cancellationToken)
         {
@@ -146,7 +166,7 @@ namespace Persistence.Repositories
                     chat_id = chatId,
                     getting_by = gettingBy,
                     messages_count = (int)messagesCount,
-                    sent_before = sentBefore
+                    sent_before = DateTime.SpecifyKind(sentBefore, DateTimeKind.Unspecified)
                 }, cancellationToken)).ConfigureAwait(false);
                 return rows.ToArray();
             }
@@ -201,7 +221,7 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string text, MediaFile[]? attachments,
+        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string? text, MediaFile[]? attachments,
             CancellationToken cancellationToken)
         {
             try
@@ -240,7 +260,7 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string newText,
+        public async Task UpdateMessageTextAsync(Guid chatId, Guid messageId, Guid senderId, string? newText,
             CancellationToken cancellationToken)
         {
             try

@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Http.Features;
 using UserAPI.Extensions;
+using Domain.Stores;
+using Persistence.Repositories;
+using UserAPI.Services;
+using Application.Services.Interfaces;
+using UserAPI.Hubs;
 
 namespace UserAPI
 {
@@ -23,15 +28,31 @@ namespace UserAPI
             builder.ConfigureDatabaseConnectionFactory();
             builder.ConfigureMinioStorage();
 
+            // Persistence repositories
+            builder.Services.AddScoped<IUserStore, UserRepository>();
+            builder.Services.AddScoped<IBotChatStore, BotChatRepository>();
+            builder.Services.AddScoped<IBotControlStore, BotControlRepository>();
+            builder.Services.AddScoped<IPersonalChatStore, PersonalChatRepository>();
+            builder.Services.AddScoped<IPublicChatStore, PublicChatRepository>();
+            builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenRepository>();
+            builder.Services.AddScoped<ISecurityStore, SecurityRepository>();
+
+            // Updates service and hub
+            builder.Services.AddScoped<UpdatesHub>();
+            builder.Services.AddScoped<IUpdatesService, UpdatesService>();
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
                 options.ConfigureSwaggerGen();
-                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Documentation.xml"));
+                options.SupportNonNullableReferenceTypes();
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApiDocumentation.xml"));
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApplicationDocumentation.xml"));
             });
 
-            builder.Services.AddAuthBuilderExtension(builder.Configuration);
+            builder.AddAuthBuilderExtension();
+            builder.Services.AddSignalR();
 
             var app = builder.Build();
             app.AddAuthAppExtension();
@@ -46,7 +67,7 @@ namespace UserAPI
 
 
             app.MapControllers();
-
+            app.MapHub<UpdatesHub>("/updates");
             app.Run();
         }
     }

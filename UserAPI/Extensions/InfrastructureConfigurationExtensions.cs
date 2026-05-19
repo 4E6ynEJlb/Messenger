@@ -10,6 +10,7 @@ namespace UserAPI.Extensions
     {
         public static void ConfigureDatabaseConnectionFactory(this WebApplicationBuilder builder)
         {
+            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
             builder.Services.AddSingleton(sp =>
             {
                 var cs = builder.Configuration

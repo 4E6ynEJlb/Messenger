@@ -1,0 +1,60 @@
+services:
+  userapi:
+    image: ${DOCKER_REGISTRY-}userapi
+    build:
+      context: .
+      dockerfile: UserAPI/Dockerfile
+    depends_on:
+      - npgsql-container
+      - flyway
+      - maintenanceapi
+  maintenanceapi:
+    image: ${DOCKER_REGISTRY-}maintenanceapi
+    build:
+      context: .
+      dockerfile: MaintenanceAPI/Dockerfile
+  npgsql-container:
+    image: postgres:latest
+    ports:
+      - 5433:5432
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=zz778899
+      - POSTGRES_DB=messenger_db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql
+  minio:
+    container_name: minio
+    restart: unless-stopped
+    image: minio/minio
+    volumes:
+      - miniodata:/data
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+    command: server /data  
+  flyway:
+    image: flyway/flyway:10
+    container_name: flyway
+    depends_on:
+      npgsql-container:
+        condition: service_healthy
+    command:
+      - -locations=filesystem:/flyway/sql
+      - migrate
+    volumes:
+      - ./migrations:/flyway/sql
+    environment:
+      FLYWAY_URL: jdbc:postgresql://npgsql-container:5432/messenger_db
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: zz778899
+volumes:
+  miniodata:
+  db-data:
