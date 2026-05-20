@@ -69,17 +69,17 @@ namespace Persistence.Repositories
                         @creator_id,
                         @is_searchable,
                         ROW(@media_id, @file_name, @content_type)::media_file,
-                        @default_member_role)
+                        @default_member_role::en_public_chat_member_role)
                     """;
                 var result = await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_name = chatName,
                     creator_id = creatorId,
                     is_searchable = isSearchable,
-                    media_id = avatar.MediaId,
-                    file_name = avatar.FileName,
-                    content_type = avatar.ContentType,
-                    default_member_role = defaultMemberRole
+                    media_id = avatar?.MediaId,
+                    file_name = avatar?.FileName,
+                    content_type = avatar?.ContentType,
+                    default_member_role = defaultMemberRole.ToString()
                 }, cancellationToken)).ConfigureAwait(false);
                 if (result == Guid.Empty) throw new DatabaseUpdateException(new Exception("No rows affected."));
                 return result;
@@ -310,12 +310,12 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
-                    "SELECT sch_user.give_public_chat_member_role(@chat_id, @member_id, @role, @giving_by)";
+                    "SELECT sch_user.give_public_chat_member_role(@chat_id, @member_id, @role::en_public_chat_member_role, @giving_by)";
                 await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_id = chatId,
                     member_id = member,
-                    role = newRole,
+                    role = newRole.ToString(),
                     giving_by = givingBy
                 }, cancellationToken)).ConfigureAwait(false);
             }
@@ -367,7 +367,7 @@ namespace Persistence.Repositories
                     SELECT * FROM sch_user.resend_to_public_messages(
                         @chat_id,
                         @author,
-                        @source_chat_type,
+                        @source_chat_type::en_chat_type,
                         @source_chat_id,
                         @messages_id)
                     """;
@@ -375,7 +375,7 @@ namespace Persistence.Repositories
                 {
                     chat_id = chatId,
                     author = senderId,
-                    source_chat_type = sourceChatType,
+                    source_chat_type = sourceChatType.ToString(),
                     source_chat_id = sourceChatId,
                     messages_id = messages
                 }, cancellationToken)).ConfigureAwait(false);
@@ -467,7 +467,7 @@ namespace Persistence.Repositories
                             @chat_name,
                             @is_searchable,
                             NULL::media_file,
-                            @default_member_role)
+                            @default_member_role::en_public_chat_member_role)
                         """;
                     param = new
                     {
@@ -476,7 +476,7 @@ namespace Persistence.Repositories
                         update_avatar = updateAvatar,
                         chat_name = newName,
                         is_searchable = isSearchable,
-                        default_member_role = defaultMemberRole
+                        default_member_role = defaultMemberRole.ToString()
                     };
                 }
                 else
@@ -489,7 +489,7 @@ namespace Persistence.Repositories
                             @chat_name,
                             @is_searchable,
                             ROW(@media_id, @file_name, @content_type)::media_file,
-                            @default_member_role)
+                            @default_member_role::en_public_chat_member_role)
                         """;
                     param = new
                     {
@@ -501,7 +501,7 @@ namespace Persistence.Repositories
                         media_id = newAvatar.MediaId,
                         file_name = newAvatar.FileName,
                         content_type = newAvatar.ContentType,
-                        default_member_role = defaultMemberRole
+                        default_member_role = defaultMemberRole.ToString()
                     };
                 }
 

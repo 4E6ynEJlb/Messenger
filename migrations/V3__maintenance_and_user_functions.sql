@@ -784,7 +784,7 @@ FROM (
     LEFT JOIN private.users
         ON pcm2.user_id = users.user_id
 
-    JOIN (
+    LEFT JOIN (
         SELECT DISTINCT ON (chat_id)
             chat_id,
             sent_at
@@ -827,7 +827,7 @@ FROM (
         WHERE get_user_chats.user_id = public_chats_members.user_id
     ) chats_with_user
 
-    JOIN (
+    LEFT JOIN (
         SELECT DISTINCT ON (chat_id)
             chat_id,
             sent_at
@@ -865,7 +865,7 @@ FROM (
     LEFT JOIN private.bots b
         ON b.bot_id = bc.bot_id
 
-    JOIN (
+    LEFT JOIN (
         SELECT DISTINCT ON (chat_id)
             chat_id,
             sent_at
@@ -890,7 +890,7 @@ FROM (
     WHERE bc.user_id = get_user_chats.user_id
 
 ) unsorted_result
-ORDER BY sent_at DESC
+ORDER BY sent_at DESC NULLS LAST
 OFFSET (page - 1) * page_size
 LIMIT page_size;
 $$

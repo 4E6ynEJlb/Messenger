@@ -1,4 +1,7 @@
-﻿namespace UserAPI.Models
+﻿using Application.Models.Input;
+using UserAPI.Extensions;
+
+namespace UserAPI.Models
 {
     public record UpdateBotForm
     {
@@ -14,5 +17,14 @@
         /// </summary>
         public required bool UpdateAvatar { get; init; }
         public IFormFile? BotAvatar { get; init; }
+        public UpdateBotModel ToUpdateBotModel() => new UpdateBotModel
+        {
+            BotName = BotName,
+            Tag = Tag,
+            UpdateDescription = UpdateDescription,
+            BotDescription = BotDescription,
+            UpdateAvatar = UpdateAvatar,
+            BotAvatar = BotAvatar?.ToFileUpload()
+        };
     }
 }

@@ -47,8 +47,10 @@ namespace Application.Services.Implementations
                 cancellationToken);
         }
 
-        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid mediaId, CancellationToken cancellationToken)
+        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken)
         {
+            if (!Guid.TryParse(mediaLink[(_mediaPrefix.Length + 1)..], out Guid mediaId))
+                throw new DataValidationException("mediaLink");
             Guid messageId = await _personalChatStore.GetMessageIdByMediaAsync(chatId, mediaId, cancellationToken);
             await _personalChatStore.DeleteFileFromMessageAsync(chatId, mediaId, userId, cancellationToken);
             await _messagePublisher.PublishAsync(
@@ -156,7 +158,7 @@ namespace Application.Services.Implementations
             return ids;
         }
 
-        public async Task<Guid> SendMessageAsync(Guid userId, SendingMessage sendingMessage, CancellationToken cancellationToken)
+        public async Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken)
         {
             Domain.Models.Types.MediaFile[]? attachments = null;
             if (sendingMessage.Attachments != null && sendingMessage.Attachments.Length > 0)
@@ -172,7 +174,7 @@ namespace Application.Services.Implementations
             }
 
             Guid id = await _personalChatStore.SendMessageAsync(
-                sendingMessage.ChatId, userId,
+                sendingMessage.ChatId, sendingMessage.Author,
                 sendingMessage.ReplyTo, sendingMessage.MessageText,
                 attachments, cancellationToken);
 
@@ -181,7 +183,7 @@ namespace Application.Services.Implementations
                 {
                     ChatId = sendingMessage.ChatId,
                     ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(sendingMessage.ChatId, userId, cancellationToken)],
+                    UserId = [sendingMessage.Author, await _personalChatStore.GetUserIdByChatIdAsync(sendingMessage.ChatId, sendingMessage.Author, cancellationToken)],
                     MessagesId = [id]
                 },
                 cancellationToken);

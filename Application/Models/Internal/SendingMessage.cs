@@ -8,6 +8,6 @@ namespace Application.Models.Internal
         public required string? MessageText { get; init; }
         public required Guid? ReplyTo { get; init; }
         public required Guid Author { get; init; }
-        public required FileUpload[] Attachments { get; init; }
+        public required FileUpload[]? Attachments { get; init; }
     }
 }

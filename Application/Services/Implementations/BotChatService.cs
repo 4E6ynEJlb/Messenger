@@ -105,7 +105,7 @@ namespace Application.Services.Implementations
             return ids;
         }
 
-        public async Task<Guid> SendMessageAsync(Guid userId, SendingMessage sendingMessage, CancellationToken cancellationToken)
+        public async Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken)
         {
             Domain.Models.Types.MediaFile[]? attachments = null;
             if (sendingMessage.Attachments != null && sendingMessage.Attachments.Length > 0)
@@ -121,7 +121,7 @@ namespace Application.Services.Implementations
             }
 
             Guid id = await _botChatStore.SendMessageAsync(
-                sendingMessage.ChatId, userId,
+                sendingMessage.ChatId, sendingMessage.Author,
                 sendingMessage.ReplyTo, sendingMessage.MessageText,
                 attachments, cancellationToken);
 
@@ -130,7 +130,7 @@ namespace Application.Services.Implementations
                 {
                     ChatId = sendingMessage.ChatId,
                     ChatType = Models.Internal.Constants.ChatType.Bot,
-                    UserId = [userId],
+                    UserId = [sendingMessage.Author],
                     MessagesId = [id]
                 },
                 cancellationToken);

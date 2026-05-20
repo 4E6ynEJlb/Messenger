@@ -4,8 +4,14 @@
     <File Path="migrations/V2__tables.sql" />
     <File Path="migrations/V3__maintenance_and_user_functions.sql" />
   </Folder>
+  <Folder Name="/nginx/">
+    <File Path="nginx/nginx.conf" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/Элементы решения/">
+    <File Path="prometheus.yml" />
   </Folder>
   <Project Path="Application/Application.csproj" />
   <Project Path="docker-compose.dcproj">

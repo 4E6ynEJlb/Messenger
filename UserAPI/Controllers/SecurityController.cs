@@ -1,6 +1,5 @@
 ﻿using Application.Models.Internal.Constants;
-using Domain.Models.Types;
-using Domain.Stores;
+using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
@@ -13,10 +12,10 @@ namespace UserAPI.Controllers
     [ApiController]
     public class SecurityController : ControllerBase
     {
-        private readonly ISecurityStore _securityStore;
-        public SecurityController(ISecurityStore securityStore)
+        private readonly ISecurityService _securityService;
+        public SecurityController(ISecurityService securityService)
         {
-            _securityStore = securityStore;
+            _securityService = securityService;
         }
 
         /// <summary>
@@ -35,8 +34,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> ReportMessage(ChatType chatType, Guid chatId, Guid messageId, string? comment, CancellationToken cancellationToken)
         {
-            var userId = HttpContext.GetUserId();
-            await _securityStore.ReportMessageAsync(userId, chatType switch { ChatType.Personal => EnChatType.Personal, ChatType.Group => EnChatType.Public, ChatType.Bot => EnChatType.Bot, _ => throw new ArgumentOutOfRangeException() }, chatId, messageId, comment, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _securityService.ReportMessageAsync(userId, chatType, chatId, messageId, comment, cancellationToken);
             return Ok();
         }
 
@@ -54,8 +53,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> ReportUser(Guid reportedUserId, string? comment, CancellationToken cancellationToken)
         {
-            var userId = HttpContext.GetUserId();
-            await _securityStore.ReportUserAsync(userId, reportedUserId, comment, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _securityService.ReportUserAsync(userId, reportedUserId, comment, cancellationToken);
             return Ok();
         }
 
@@ -73,8 +72,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> ReportBot(Guid botId, string? comment, CancellationToken cancellationToken)
         {
-            var userId = HttpContext.GetUserId();
-            await _securityStore.ReportBotAsync(userId, botId, comment, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _securityService.ReportBotAsync(userId, botId, comment, cancellationToken);
             return Ok();
         }
 
@@ -92,8 +91,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> ReportPublicChat(Guid chatId, string? comment, CancellationToken cancellationToken)
         {
-            var userId = HttpContext.GetUserId();
-            await _securityStore.ReportPublicChatAsync(userId, chatId, comment, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _securityService.ReportPublicChatAsync(userId, chatId, comment, cancellationToken);
             return Ok();
         }
 
@@ -112,8 +111,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> ReportAdministrator(int adminId, string? comment, CancellationToken cancellationToken)
         {
-            var userId = HttpContext.GetUserId();
-            await _securityStore.ReportAdministratorAsync(userId, adminId, comment, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _securityService.ReportAdministratorAsync(userId, adminId, comment, cancellationToken);
             return Ok();
         }
     }

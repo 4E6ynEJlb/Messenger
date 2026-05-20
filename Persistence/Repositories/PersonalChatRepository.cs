@@ -139,12 +139,12 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
-                    "SELECT * FROM sch_user.get_message_id_by_media(@chat_id, @attachment_id, @chat_type)";
+                    "SELECT * FROM sch_user.get_message_id_by_media(@chat_id, @attachment_id, @chat_type::en_chat_type)";
                 return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_id = chatId,
                     attachment_id = mediaId,
-                    chat_type = EnChatType.Personal
+                    chat_type = EnChatType.Personal.ToString()
                 }, cancellationToken)).ConfigureAwait(false);
             }
             catch (PostgresException ex)
@@ -201,7 +201,7 @@ namespace Persistence.Repositories
                     SELECT * FROM sch_user.resend_to_private_messages(
                         @chat_id,
                         @author,
-                        @source_chat_type,
+                        @source_chat_type::en_chat_type,
                         @source_chat_id,
                         @messages_id)
                     """;
@@ -209,7 +209,7 @@ namespace Persistence.Repositories
                 {
                     chat_id = chatId,
                     author = senderId,
-                    source_chat_type = sourceChatType,
+                    source_chat_type = sourceChatType.ToString(),
                     source_chat_id = sourceChatId,
                     messages_id = messages
                 }, cancellationToken)).ConfigureAwait(false);

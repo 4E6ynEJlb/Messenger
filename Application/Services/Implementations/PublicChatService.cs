@@ -67,8 +67,10 @@ namespace Application.Services.Implementations
             }, cancellationToken);
         }
 
-        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid mediaId, CancellationToken cancellationToken)
+        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken)
         {
+            if (!Guid.TryParse(mediaLink[(_mediaPrefix.Length + 1)..], out Guid mediaId))
+                throw new DataValidationException("mediaLink");
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(chatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
             Guid messageId = await _publicChatStore.GetMessageIdByMediaAsync(chatId, mediaId, cancellationToken);
@@ -223,7 +225,7 @@ namespace Application.Services.Implementations
             return ids;
         }
 
-        public async Task<Guid> SendMessageAsync(Guid userId, SendingMessage sendingMessage, CancellationToken cancellationToken)
+        public async Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken)
         {
             MediaFile[]? attachments = null;
             if (sendingMessage.Attachments != null && sendingMessage.Attachments.Length > 0)
@@ -238,11 +240,11 @@ namespace Application.Services.Implementations
                 attachments = list.ToArray();
             }
 
-            Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(sendingMessage.ChatId, userId, cancellationToken))
+            Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(sendingMessage.ChatId, sendingMessage.Author, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
 
             Guid id = await _publicChatStore.SendMessageAsync(
-                sendingMessage.ChatId, userId,
+                sendingMessage.ChatId, sendingMessage.Author,
                 sendingMessage.ReplyTo, sendingMessage.MessageText,
                 attachments, cancellationToken);
 

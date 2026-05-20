@@ -11,8 +11,8 @@ namespace Application.Services.Interfaces
         public Task<Message[]> GetMessagesAsync(Guid userId, Guid chatId, MessagesSelectOptions options, CancellationToken cancellationToken);
         public Task<Message> GetMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken);
         public Task<Guid> GetBotIdByChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
-        public Task<Guid> OpenChatWithBotAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
-        public Task<Guid> SendMessageAsync(Guid userId, SendingMessage sendingMessage, CancellationToken cancellationToken);
+        public Task<Guid> OpenChatWithBotAsync(Guid userId, Guid botId, CancellationToken cancellationToken);
+        public Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken);
         public Task<Guid[]> ResendMessagesAsync(Guid userId, ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken);             
         public Task DisableBotAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
         public Task EnableBotAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
