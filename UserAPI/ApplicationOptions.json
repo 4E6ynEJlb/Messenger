@@ -1,0 +1,13 @@
+{
+  "ApplicationServicesOptions": {
+    "MediaPrefix": "https://localhost:10102/Media"
+  },
+  "ExpirationOptions": {
+    "BotUserExpirationSeconds": 3600,
+    "MessagesExpirationSeconds": 600
+  },
+  "TokenExpirationOptions": {
+    "RememberingHours": 744, //31 days
+    "EphemeralHours": 1
+  }
+}

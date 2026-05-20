@@ -4,7 +4,6 @@ using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
 using Persistence.Exceptions;
-using Persistence;
 
 namespace Persistence.Repositories
 {

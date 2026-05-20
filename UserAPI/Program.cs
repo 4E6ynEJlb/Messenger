@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Http.Features;
+using Prometheus;
 using UserAPI.Extensions;
-using Domain.Stores;
-using Persistence.Repositories;
-using UserAPI.Services;
-using UserAPI.Services.Interfaces;
 using UserAPI.Hubs;
+using UserAPI.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace UserAPI
 {
@@ -23,23 +22,20 @@ namespace UserAPI
                 options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024;
                 options.MemoryBufferThreshold = 1 * 1024 * 1024;
             });
-            builder.Configuration.AddJsonFile("infrastructureoptions.json");
 
+            builder.Configuration.AddJsonFile("InfrastructureOptions.json");
+            builder.Configuration.AddJsonFile("ApplicationOptions.json");
+
+            builder.ConfigureOptions();
+            builder.ConfigureLogging();
             builder.ConfigureDatabaseConnectionFactory();
             builder.ConfigureMinioStorage();
+            builder.ConfigureRedis();
+            builder.ConfigureBus();
 
-            // Persistence repositories
-            builder.Services.AddScoped<IUserStore, UserRepository>();
-            builder.Services.AddScoped<IBotChatStore, BotChatRepository>();
-            builder.Services.AddScoped<IBotControlStore, BotControlRepository>();
-            builder.Services.AddScoped<IPersonalChatStore, PersonalChatRepository>();
-            builder.Services.AddScoped<IPublicChatStore, PublicChatRepository>();
-            builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenRepository>();
-            builder.Services.AddScoped<ISecurityStore, SecurityRepository>();
 
-            // Updates service and hub
-            builder.Services.AddScoped<UpdatesHub>();
-            builder.Services.AddScoped<IUpdatesService, UpdatesService>();
+            builder.ConfigureRepositories();
+            builder.ConfigureServices();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -63,8 +59,19 @@ namespace UserAPI
                 app.UseSwaggerUI();
             }
 
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto
+            });
+
+            app.UseHttpMetrics();
+            app.MapMetrics();
             app.UseHttpsRedirection();
 
+            app.UseMiddleware<LoggingMiddleware>();
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.MapControllers();
             app.MapHub<UpdatesHub>("/updates");

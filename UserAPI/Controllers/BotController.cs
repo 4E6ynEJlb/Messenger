@@ -1,9 +1,6 @@
 ﻿using Application.Models.Input;
-using Application.Models.Internal;
 using Application.Models.Output;
-using Domain.Models.Types;
-using Domain.Stores;
-using Infrastructure.Storage;
+using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAPI.Extensions;
@@ -19,32 +16,20 @@ namespace UserAPI.Controllers
     [ApiController]
     public class BotController : ControllerBase
     {
-        string mediaPrefix = "https://localhost:10102/Media";
-        private readonly IBotControlStore _botControlStore;
-        private readonly IObjectStorage _objectStorage;
-        public BotController(IBotControlStore botControlStore, IObjectStorage objectStorage)
+        private readonly IBotService _botService;
+        public BotController(IBotService botService)
         {
-            _botControlStore = botControlStore;
-            _objectStorage = objectStorage;
+            _botService = botService;
         }
+
         [ProducesResponseType(typeof(Bot), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpGet("{botId}")]
         public async Task<IActionResult> GetBotInfo(Guid botId, CancellationToken cancellationToken)
-        {
-            var b = await _botControlStore.GetBotInfoAsync(botId, cancellationToken);
-            Bot bot = new Bot
-            {
-                BotId = b.BotId,
-                Name = b.Name,
-                Tag = b.Tag,
-                Avatar = $"{mediaPrefix}/{b.Avatar}",
-                Description = b.Description,
-                IsEnabled = b.IsEnabled
-            };
-            return Ok();
+        {            
+            return Ok(await _botService.GetBotInfoAsync(botId, cancellationToken));
         }
 
         /// <summary>
@@ -59,18 +44,8 @@ namespace UserAPI.Controllers
         [ProducesResponseType(404)]
         [HttpGet("[action]")]
         public async Task<IActionResult> GetBotByName(string botName, CancellationToken cancellationToken)
-        {
-            var b = await _botControlStore.GetBotByNameAsync(botName, cancellationToken);
-            Bot bot = new Bot
-            {
-                BotId = b.BotId,
-                Name = b.Name,
-                Tag = b.Tag,
-                Avatar = $"{mediaPrefix}/{b.Avatar}",
-                Description = b.Description,
-                IsEnabled = b.IsEnabled
-            };
-            return Ok(bot);
+        {            
+            return Ok(await _botService.GetBotByNameAsync(botName, cancellationToken));
         }
 
         [ProducesResponseType(typeof(Bot), 200)]
@@ -80,17 +55,7 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> GetBotByTag(string botTag, CancellationToken cancellationToken)
         {
-            var b = await _botControlStore.GetBotByTagAsync(botTag, cancellationToken);
-            Bot bot = new Bot
-            {
-                BotId = b.BotId,
-                Name = b.Name,
-                Tag = b.Tag,
-                Avatar = $"{mediaPrefix}/{b.Avatar}",
-                Description = b.Description,
-                IsEnabled = b.IsEnabled
-            };
-            return Ok(bot);
+            return Ok(await _botService.GetBotByTagAsync(botTag, cancellationToken));
         }
 
         /// <summary>
@@ -106,17 +71,7 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> ListPersonalBots(CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
-            var bots = await _botControlStore.ListPersonalBotsAsync(userId, cancellationToken);
-            var result = bots.Select(b => new Bot
-            {
-                BotId = b.BotId,
-                Name = b.Name,
-                Tag = b.Tag,
-                Avatar = $"{mediaPrefix}/{b.Avatar}",
-                Description = b.Description,
-                IsEnabled = b.IsEnabled
-            }).ToArray();
-            return Ok(result);
+            return Ok(await _botService.ListPersonalBotsAsync(userId, cancellationToken));
         }
 
         /// <summary>
@@ -132,13 +87,8 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> GetBotToken(Guid botId, CancellationToken cancellationToken)
         {
-            var token = await _botControlStore.GetBotTokenAsync(botId, HttpContext.GetUserId(), cancellationToken);
-            BotToken botToken = new BotToken
-            {
-                Token = Convert.ToBase64String(token.TokenHash),
-                TokenVersion = token.TokenVersion
-            };
-            return Ok(botToken);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.GetBotTokenAsync(botId, userId, cancellationToken));
         }
 
         /// <summary>
@@ -155,21 +105,7 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> ListBotCommands(Guid botId, CancellationToken cancellationToken)
         {
-            var commands = await _botControlStore.ListBotCommandsAsync(botId, cancellationToken);
-            var result = commands.Select(c => new Application.Models.Output.BotCommandInfo
-            {
-                Id = c.CommandId,
-                Prefix = c.Prefix,
-                Command = c.Command,
-                Description = c.Description,
-                Arguments = c.Arguments.Select(a => new CommandArgument
-                {
-                    Id = a.ArgumentId,
-                    Name = a.Name,
-                    Type = a.Type
-                }).ToArray()
-            }).ToArray();
-            return Ok(result);
+            return Ok(await _botService.ListBotCommandsAsync(botId, cancellationToken));
         }
 
         /// <summary>
@@ -186,14 +122,8 @@ namespace UserAPI.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> ListBotConnections(Guid botId, CancellationToken cancellationToken)
         {
-            var connections = await _botControlStore.ListBotConnectionsAsync(botId, HttpContext.GetUserId(), cancellationToken);
-            var result = connections.Select(c => new BotConnection
-            {
-                IPAddress = c.IPAddress,
-                ConnectedAt = c.ConnectedAt,
-                TokenVersion = c.TokenVersion
-            }).ToArray();
-            return Ok(result);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.ListBotConnectionsAsync(userId, botId, cancellationToken));
         }
 
         /// <summary>
@@ -209,19 +139,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> CreateBot([FromForm] CreateBotForm form, CancellationToken cancellationToken)
         {
-            var MediaId = Guid.NewGuid();
-            var avatar = form.BotAvatar == null ? null : new MediaFile
-            {
-                FileName = form.BotAvatar.FileName,
-                ContentType = form.BotAvatar.ContentType,
-                MediaId = MediaId,
-            };
-            var botId = await _botControlStore.CreateBotAsync(form.BotName, form.Tag, form.BotDescription, HttpContext.GetUserId(), avatar, cancellationToken);
-            if (form.BotAvatar != null)
-            {
-                await _objectStorage.SaveAsync(form.BotAvatar.OpenReadStream(), MediaId, cancellationToken);
-            }
-            return Ok(botId);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.CreateBotAsync(userId, form.ToCreateBotModel(), cancellationToken));
         }
 
         /// <summary>
@@ -239,8 +158,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> AddCommand(Guid botId, AddCommandModel addCommandModel, CancellationToken cancellationToken)
         {
-            var commandId = await _botControlStore.AddCommandAsync(botId, HttpContext.GetUserId(), addCommandModel.Prefix, addCommandModel.Command, addCommandModel.Description, cancellationToken);
-            return Ok(commandId);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.AddCommandAsync(userId, botId, addCommandModel, cancellationToken));
         }
 
         /// <summary>
@@ -258,8 +177,8 @@ namespace UserAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> AddCommandArgument(Guid botId, AddArgumentModel addArgumentModel, CancellationToken cancellationToken)
         {
-            var argumentId = await _botControlStore.AddCommandArgumentAsync(botId, HttpContext.GetUserId(), addArgumentModel.CommandId, addArgumentModel.ArgumentName, addArgumentModel.ArgumentType, cancellationToken);
-            return Ok(argumentId);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.AddCommandArgumentAsync(userId, botId, addArgumentModel, cancellationToken));
         }
 
         /// <summary>
@@ -276,17 +195,8 @@ namespace UserAPI.Controllers
         [HttpPut("[action]")]
         public async Task<IActionResult> UpdateBot(Guid botId, [FromForm] UpdateBotForm form, CancellationToken cancellationToken)
         {
-            Guid? newAvatarMediaId = form.UpdateAvatar ? (form.BotAvatar == null ? null : (Guid?)Guid.NewGuid()) : null;
-            await _botControlStore.UpdateBotAsync(botId, HttpContext.GetUserId(), form.UpdateDescription, form.UpdateAvatar, form.BotName, form.Tag, form.UpdateDescription ? form.BotDescription : null, form.UpdateAvatar ? (form.BotAvatar == null ? null : new MediaFile
-            {
-                FileName = form.BotAvatar.FileName,
-                ContentType = form.BotAvatar.ContentType,
-                MediaId = newAvatarMediaId!.Value,
-            }) : null, cancellationToken);
-            if (form.UpdateAvatar && form.BotAvatar != null)
-            {
-                await _objectStorage.SaveAsync(form.BotAvatar.OpenReadStream(), newAvatarMediaId!.Value, cancellationToken);
-            }
+            Guid userId = HttpContext.GetUserId();
+            await _botService.UpdateBotAsync(userId, botId, form.ToUpdateBotModel(), cancellationToken);
             return Ok();
         }
 
@@ -303,13 +213,8 @@ namespace UserAPI.Controllers
         [HttpPatch("[action]")]
         public async Task<IActionResult> RegenerateToken(Guid botId, CancellationToken cancellationToken)
         {
-            var botToken = await _botControlStore.RegenerateBotTokenAsync(botId, HttpContext.GetUserId(), cancellationToken);
-            BotToken result = new BotToken
-            {
-                Token = Convert.ToBase64String(botToken.TokenHash),
-                TokenVersion = botToken.TokenVersion
-            };
-            return Ok(result);
+            Guid userId = HttpContext.GetUserId();
+            return Ok(await _botService.RegenerateBotTokenAsync(userId, botId, cancellationToken));
         }
 
         /// <summary>
@@ -326,7 +231,8 @@ namespace UserAPI.Controllers
         [HttpPut("[action]")]
         public async Task<IActionResult> UpdateCommand(Guid botId, UpdateCommandModel updateCommandModel, CancellationToken cancellationToken)
         {
-            await _botControlStore.UpdateCommandAsync(botId, HttpContext.GetUserId(), updateCommandModel.Id, updateCommandModel.NewPrefix, updateCommandModel.NewCommand, updateCommandModel.NewDescription, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _botService.UpdateCommandAsync(userId, botId, updateCommandModel, cancellationToken);
             return Ok();
         }
 
@@ -344,7 +250,8 @@ namespace UserAPI.Controllers
         [HttpPut("[action]")]
         public async Task<IActionResult> UpdateCommandArgument(Guid botId, UpdateArgumentModel updateArgumentModel, CancellationToken cancellationToken)
         {
-            await _botControlStore.UpdateCommandArgumentAsync(botId, HttpContext.GetUserId(), updateArgumentModel.CommandId, updateArgumentModel.ArgumentId, updateArgumentModel.NewArgumentName, updateArgumentModel.NewArgumentType, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _botService.UpdateCommandArgumentAsync(userId, botId, updateArgumentModel, cancellationToken);
             return Ok();
         }
 
@@ -361,7 +268,8 @@ namespace UserAPI.Controllers
         [HttpDelete("[action]")]
         public async Task<IActionResult> DeleteBot(Guid botId, CancellationToken cancellationToken)
         {
-            await _botControlStore.DeleteBotAsync(botId, HttpContext.GetUserId(), cancellationToken);
+            Guid userId = HttpContext.GetUserId(); 
+            await _botService.DeleteBotAsync(userId, botId, cancellationToken);
             return Ok();
         }
 
@@ -380,7 +288,8 @@ namespace UserAPI.Controllers
         [HttpPatch("[action]")]
         public async Task<IActionResult> DeleteCommand(Guid botId, uint commandId, CancellationToken cancellationToken)
         {
-            await _botControlStore.DeleteCommandAsync(botId, HttpContext.GetUserId(), commandId, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _botService.DeleteCommandAsync(userId, botId, commandId, cancellationToken);
             return Ok();
         }
 
@@ -400,7 +309,8 @@ namespace UserAPI.Controllers
         [HttpPatch("[action]")]
         public async Task<IActionResult> DeleteCommandArgument(Guid botId, uint commandId, uint argumentId, CancellationToken cancellationToken)
         {
-            await _botControlStore.DeleteCommandArgumentAsync(botId, HttpContext.GetUserId(), commandId, argumentId, cancellationToken);
+            Guid userId = HttpContext.GetUserId();
+            await _botService.DeleteArgumentAsync(userId, botId, commandId, argumentId, cancellationToken);
             return Ok();
         }
     }

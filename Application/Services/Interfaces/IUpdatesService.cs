@@ -1,6 +1,6 @@
 ﻿using Application.Models.Internal.Constants;
 
-namespace UserAPI.Services.Interfaces
+namespace Application.Services.Interfaces
 {
     public interface IUpdatesService
     {

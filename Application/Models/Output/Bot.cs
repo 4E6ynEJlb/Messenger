@@ -1,10 +1,24 @@
-﻿namespace Application.Models.Output
+﻿using Domain.Models.Types;
+using System.Diagnostics.CodeAnalysis;
+
+namespace Application.Models.Output
 {
     /// <summary>
     /// Bot information model
     /// </summary>
     public record Bot
     {
+        public Bot() { }
+        [SetsRequiredMembers]
+        public Bot(BotInfo botInfo, string mediaPrefix)
+        {
+            BotId = botInfo.BotId;
+            Name = botInfo.Name;
+            Tag = botInfo.Tag;
+            Avatar = $"{mediaPrefix}/{botInfo.Avatar}";
+            Description = botInfo.Description;
+            IsEnabled = botInfo.IsEnabled;
+        }
         public required Guid BotId { get; init; }
         public required string Name { get; init; }
         public required string Tag { get; init; }

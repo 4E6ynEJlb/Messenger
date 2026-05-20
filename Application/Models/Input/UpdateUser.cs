@@ -1,4 +1,7 @@
-﻿namespace Application.Models.Input
+﻿using Application.Models.Output;
+using Domain.Models.Types;
+
+namespace Application.Models.Input
 {
     /// <summary>
     /// Model for updating user information. For not updating fields send the same values as before, 
@@ -23,5 +26,17 @@
         /// Can be null, max length 512 chars
         /// </summary>
         public required string? Bio { get; init; }
+
+        internal UserData ToUserData(Guid userId) => new UserData()
+        {
+            UserId = userId,
+            FirstName = FirstName,
+            LastName = LastName,
+            Tag = Tag,
+            BirthDate = BirthDate,
+            Bio = Bio,
+            Avatar = null,
+            WasOnline = DateTime.UtcNow
+        };
     }
 }

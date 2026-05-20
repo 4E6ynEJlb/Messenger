@@ -59,16 +59,16 @@ namespace Persistence.Repositories
             {
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
-                    "SELECT sch_user.report_message(@reported_by, @chat_type, @chat_id, @message_id, @comment)";
+                    "SELECT sch_user.report_message(@reported_by, @chat_type::en_chat_type, @chat_id, @message_id, @comment)";
                 var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     reported_by = reportedBy,
-                    chat_type = chatType,
+                    chat_type = chatType.ToString(),
                     chat_id = chatId,
                     message_id = messageId,
                     comment
                 }, cancellationToken)).ConfigureAwait(false);
-                if (affected == 0) throw new Persistence.Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
+                if (affected == 0) throw new Exceptions.DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {

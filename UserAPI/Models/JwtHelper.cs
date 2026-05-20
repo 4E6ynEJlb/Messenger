@@ -24,12 +24,12 @@ namespace UserAPI.Models
         {
             var claims = new List<Claim>
                 {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, id.ToString()),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, role)
+                    new Claim(ClaimTypes.NameIdentifier, id.ToString()),
+                    new Claim(ClaimTypes.Role, role)
                 };
             ClaimsIdentity claimsIdentity =
-            new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
-                ClaimsIdentity.DefaultRoleClaimType);
+            new ClaimsIdentity(claims, "Token", 
+            ClaimTypes.NameIdentifier, ClaimTypes.Role);
             return claimsIdentity;
         }
     }

@@ -1,14 +1,14 @@
 ﻿using Application.Models.Internal.Constants;
 using Microsoft.AspNetCore.SignalR;
 using UserAPI.Hubs;
-using UserAPI.Services.Interfaces;
+using Application.Services.Interfaces;
 
 namespace UserAPI.Services
 {
     public class UpdatesService : IUpdatesService
     {
-        private readonly UpdatesHub _updatesHub;
-        public UpdatesService(UpdatesHub updatesHub)
+        private readonly IHubContext<UpdatesHub> _updatesHub;
+        public UpdatesService(IHubContext<UpdatesHub> updatesHub)
         {
             _updatesHub = updatesHub;
         }

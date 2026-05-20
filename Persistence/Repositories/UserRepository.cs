@@ -247,7 +247,7 @@ namespace Persistence.Repositories
                     last_name = newUserData.LastName,
                     tag = newUserData.Tag,
                     avatar = newUserData.Avatar,
-                    birth_date = newUserData.BirthDate,
+                    birth_date = newUserData.BirthDate.ToDateTime(TimeOnly.MinValue),
                     bio = newUserData.Bio,
                     was_online = newUserData.WasOnline
                 }, cancellationToken)).ConfigureAwait(false);
