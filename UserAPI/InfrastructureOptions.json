@@ -1,0 +1,23 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "User ID=user_web_api;Password=user_web_api_password;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;"
+  },
+  "MinioOptions": {
+    "AccessKey": "minioadmin",
+    "SecretKey": "minioadmin",
+    "Endpoint": "minio:9000",
+    "BucketName": "media"
+  },
+  "Redis": {
+    "Messages": "redis-1:6379",
+    "BotsUsers": "redis-2:6379"
+  },
+  "Kafka": {
+    "Host": "kafka:9092"
+  },
+  "LokiOptions": {
+    "User": "admin",
+    "Password": "admin",
+    "URI": "http://loki:3100"
+  }
+}

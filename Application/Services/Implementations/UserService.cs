@@ -93,6 +93,7 @@ namespace Application.Services.Implementations
         {
             UserData userData = updateUser.ToUserData(id);
             await _userStore.UpdateUserDataAsync(userData, cancellationToken);
+            await _cache.InvalidateAsync(id, cancellationToken);
         }
 
         public async Task UploadAvatarAsync(Guid id, FileUpload file, CancellationToken cancellationToken)
@@ -100,6 +101,7 @@ namespace Application.Services.Implementations
             Guid mediaId = Guid.NewGuid();
             await _userStore.UploadUserAvatarAsync(id, file.ToMediaFile(mediaId), cancellationToken);
             await _objectStorage.SaveAsync(file.Content, mediaId, cancellationToken);
+            await _cache.InvalidateAsync(id, cancellationToken);
         }
     }
 }
