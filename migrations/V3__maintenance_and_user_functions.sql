@@ -1695,7 +1695,7 @@ BEGIN
          coalesce(trim(send_personal_message.message_text), ''), CURRENT_TIMESTAMP, false, null, send_personal_message.reply_to)
     RETURNING message_id INTO sending_message_id;
 
-    IF adding_attachment IS NOT NULL THEN
+    IF attachments IS NOT NULL THEN
         FOREACH adding_attachment IN ARRAY attachments LOOP
             INSERT INTO private.media (media_id, file_name, content_type)
             VALUES (adding_attachment.media_id, adding_attachment.file_name, adding_attachment.content_type);
@@ -2417,7 +2417,7 @@ BEGIN
          coalesce(trim(send_public_message.message_text), ''), CURRENT_TIMESTAMP, false, null, send_public_message.reply_to)
     RETURNING message_id INTO sending_message_id;
 
-    IF adding_attachment IS NOT NULL THEN
+    IF attachments IS NOT NULL THEN
         FOREACH adding_attachment IN ARRAY attachments LOOP
             INSERT INTO private.media (media_id, file_name, content_type)
             VALUES (adding_attachment.media_id, adding_attachment.file_name, adding_attachment.content_type);
@@ -3429,7 +3429,7 @@ BEGIN
          coalesce(trim(send_bot_message.message_text), ''), CURRENT_TIMESTAMP, false, null, send_bot_message.reply_to)
     RETURNING message_id INTO sending_message_id;
 
-    IF adding_attachment IS NOT NULL THEN
+    IF attachments IS NOT NULL THEN
         FOREACH adding_attachment IN ARRAY attachments LOOP
             INSERT INTO private.media (media_id, file_name, content_type)
             VALUES (adding_attachment.media_id, adding_attachment.file_name, adding_attachment.content_type);
