@@ -2633,7 +2633,7 @@ BEGIN
       AND private.public_messages.message_id = delete_public_message.message_id;
 
     IF deleting_message.author != delete_public_message.deleting_by AND
-       (SELECT coalesce(role, '')
+       (SELECT coalesce(role::text, '')
         FROM private.public_chats_members
         WHERE public_chats_members.chat_id = delete_public_message.chat_id
           AND public_chats_members.user_id = delete_public_message.deleting_by) NOT IN ('Creator', 'Administrator') THEN
