@@ -10,7 +10,7 @@
   },
   "Redis": {
     "Messages": "redis-1:6379",
-    "BotsUsers": "redis-2:6380"
+    "BotsUsers": "redis-2:6379"
   },
   "Kafka": {
     "Host": "kafka:9092"
