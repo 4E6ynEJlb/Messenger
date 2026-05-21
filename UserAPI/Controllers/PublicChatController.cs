@@ -33,7 +33,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
-        [HttpGet("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> Search(string chatName, PageOptions pageOptions, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -176,7 +176,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
-        [HttpGet("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> CreateNewChat([FromForm] CreatePublicChatForm createPublicChatBody, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -213,7 +213,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPut("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> SendMessage([FromForm] SendMessageForm form, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -231,7 +231,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPut("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> ResendMessages(ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -267,7 +267,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPost("[action]")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> EditMessageText(UpdatingMessage messageText, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -288,7 +288,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPost("[action]")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> GiveMemberRole(Guid member, Guid chatId, PublicChatMemberRole role, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -308,7 +308,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPost("[action]")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> UpdateChat(Guid chatId, [FromForm] UpdatePublicChatForm form, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
@@ -330,7 +330,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> BanUser(Guid chatId, Guid userId, CancellationToken cancellationToken)
         {
             Guid sourceUserId = HttpContext.GetUserId();
@@ -349,7 +349,7 @@ namespace UserAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpDelete("[action]")]
+        [HttpPost("[action]")]
         public async Task<IActionResult> UnbanUser(Guid chatId, Guid userId, CancellationToken cancellationToken)
         {
             Guid sourceUserId = HttpContext.GetUserId();
