@@ -113,6 +113,14 @@ namespace UserAPI.Extensions
                     rider.AddConsumer<MessageUpdatedConsumer>();
                     rider.AddConsumer<UserIsTypingConsumer>();
 
+                    rider.AddProducer<BotButtonsUpdatedMessage>("bot-buttons-updated-topic");
+                    rider.AddProducer<ChatDeletedMessage>("chat-deleted-topic");
+                    rider.AddProducer<FileDeletedMessage>("file-deleted-topic");
+                    rider.AddProducer<MessageDeletedMessage>("message-deleted-topic");
+                    rider.AddProducer<MessagesSentMessage>("messages-sent-topic");
+                    rider.AddProducer<MessageUpdatedMessage>("message-updated-topic");
+                    rider.AddProducer<UserIsTypingMessage>("user-is-typing-topic");
+
                     rider.UsingKafka((context, k) =>
                     {
                         k.Host(builder.Configuration["Kafka:Host"]);
