@@ -1,4 +1,4 @@
-﻿namespace Application.Models.Internal
+﻿namespace Application.Models.Internal.Constants
 {
     /// <summary>
     /// 0 - Join;
