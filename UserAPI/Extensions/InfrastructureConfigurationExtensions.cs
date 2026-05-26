@@ -2,7 +2,6 @@
 using Application.Models.Internal.Messages;
 using Application.Services.Consumers;
 using Infrastructure.Database;
-using Infrastructure.Models;
 using Infrastructure.Storage;
 using MassTransit;
 using Minio;
@@ -85,9 +84,8 @@ namespace UserAPI.Extensions
         }
 
         public static void ConfigureBus(this WebApplicationBuilder builder)
-        {
-            builder.Services.AddSingleton<FaultConsumeObserver>();
-            
+        {            
+            builder.Services.AddScoped(typeof(ConsumeLoggingFilter<>));
             builder.Services.AddMassTransit(x =>
             {
                 x.AddConsumer<BotButtonsUpdatedConsumer>();
@@ -98,9 +96,9 @@ namespace UserAPI.Extensions
                 x.AddConsumer<MessageUpdatedConsumer>();
                 x.AddConsumer<UserIsTypingConsumer>();
 
-                x.UsingInMemory((context, config) =>
+                x.UsingInMemory((context, cfg) =>
                 {
-                    config.ConnectConsumeObserver(context.GetRequiredService<FaultConsumeObserver>());
+                    cfg.ConfigureEndpoints(context);
                 });
 
                 x.AddRider(rider =>
@@ -139,6 +137,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<BotButtonsUpdatedConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<ChatDeletedMessage>(
@@ -152,6 +151,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<ChatDeletedConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<FileDeletedMessage>(
@@ -165,6 +165,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<FileDeletedConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<MessageDeletedMessage>(
@@ -178,6 +179,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<MessageDeletedConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<MessagesSentMessage>(
@@ -191,6 +193,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<MessagesSentConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<MessageUpdatedMessage>(
@@ -204,6 +207,7 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<MessageUpdatedConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
 
                         k.TopicEndpoint<UserIsTypingMessage>(
@@ -217,8 +221,8 @@ namespace UserAPI.Extensions
                                     t.ReplicationFactor = 1;
                                 });
                                 e.ConfigureConsumer<UserIsTypingConsumer>(context);
+                                e.UseConsumeFilter(typeof(ConsumeLoggingFilter<>), context);
                             });
-
                     });
                 });
             });

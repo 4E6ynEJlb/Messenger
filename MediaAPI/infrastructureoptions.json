@@ -7,5 +7,10 @@
     "SecretKey": "minioadmin",
     "Endpoint": "minio:9000",
     "BucketName": "media"
+  },
+  "LokiOptions": {
+    "User": "admin",
+    "Password": "admin",
+    "URI": "http://loki:3100"
   }
 }

@@ -1,4 +1,4 @@
-﻿using Application.Models.Internal;
+﻿using Application.Models.Internal.Constants;
 using Domain.Models.Types;
 
 namespace Application.Models.Helpers

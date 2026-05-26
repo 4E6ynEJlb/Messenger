@@ -1,4 +1,4 @@
-﻿namespace UserAPI.Services
+﻿namespace MediaAPI.Middleware
 {
     public partial class LoggingMiddleware
     {

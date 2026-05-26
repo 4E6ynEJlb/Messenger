@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaintenanceAPI.Controllers
 {
-    [Route("[controller]")]
     [ApiController]
     public class MediaController : ControllerBase
     {

@@ -12,19 +12,17 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["MaintenanceAPI/MaintenanceAPI.csproj", "MaintenanceAPI/"]
-RUN dotnet restore "./MaintenanceAPI/MaintenanceAPI.csproj"
+COPY ["MediaAPI/MediaAPI.csproj", "MediaAPI/"]
+RUN dotnet restore "./MediaAPI/MediaAPI.csproj"
 COPY . .
-WORKDIR "/src/MaintenanceAPI"
-RUN dotnet build "./MaintenanceAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
+WORKDIR "/src/MediaAPI"
+RUN dotnet build "./MediaAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 # Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./MaintenanceAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
+RUN dotnet publish "./MediaAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 # Этот этап используется в рабочей среде или при запуске из VS в обычном режиме (по умолчанию, когда конфигурация отладки не используется)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MaintenanceAPI.dll"]
+ENTRYPOINT ["dotnet", "MediaAPI.dll"]

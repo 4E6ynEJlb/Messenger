@@ -8,4 +8,15 @@ scrape_configs:
     metrics_path: /metrics
 
     static_configs:
-      - targets: ['userapi-1:20101']
+      - targets:
+          - 'userapi-1:8080'
+          - 'userapi-2:8080'
+          - 'userapi-3:8080'
+
+  - job_name: 'mediaapi'
+
+    metrics_path: /metrics
+
+    static_configs:
+      - targets:
+          - 'mediaapi:8080'

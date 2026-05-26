@@ -42,6 +42,10 @@ namespace UserAPI
             builder.Services.AddSwaggerGen(options =>
             {
                 options.ConfigureSwaggerGen();
+                options.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+                {
+                    Url = "/userapi"
+                });
                 options.SupportNonNullableReferenceTypes();
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApiDocumentation.xml"));
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "ApplicationDocumentation.xml"));
@@ -55,8 +59,12 @@ namespace UserAPI
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwagger(c=>c.RouteTemplate = "swagger/{documentName}/swagger.json");
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/userapi/swagger/v1/swagger.json", "User API V1");
+                    c.RoutePrefix = "swagger";
+                });
             }
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -66,13 +74,12 @@ namespace UserAPI
                 ForwardedHeaders.XForwardedProto
             });
 
-            app.UseHttpMetrics();
-            app.MapMetrics();
-            app.UseHttpsRedirection();
-
+            app.UseMiddleware<TelemetryMiddleware>();
             app.UseMiddleware<LoggingMiddleware>();
             app.UseMiddleware<ExceptionMiddleware>();
 
+
+            app.MapMetrics();
             app.MapControllers();
             app.MapHub<UpdatesHub>("/updates");
             app.Run();
