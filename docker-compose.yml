@@ -7,7 +7,7 @@ services:
     depends_on:
       - npgsql-container
       - flyway
-      - maintenanceapi
+      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -22,7 +22,7 @@ services:
     depends_on:
       - npgsql-container
       - flyway
-      - maintenanceapi
+      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -37,7 +37,7 @@ services:
     depends_on:
       - npgsql-container
       - flyway
-      - maintenanceapi
+      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -46,11 +46,11 @@ services:
       - grafana
  
 
-  maintenanceapi:
-    image: ${DOCKER_REGISTRY-}maintenanceapi
+  mediaapi:
+    image: ${DOCKER_REGISTRY-}mediaapi
     build:
       context: .
-      dockerfile: MaintenanceAPI/Dockerfile
+      dockerfile: MediaAPI/Dockerfile
 
 
   npgsql-container:
@@ -189,6 +189,8 @@ services:
       - userapi-1
       - userapi-2
       - userapi-3
+
+
 
 volumes:
   miniodata:

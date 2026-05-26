@@ -1,6 +1,6 @@
 {
   "ApplicationServicesOptions": {
-    "MediaPrefix": "https://localhost:10102/Media"
+    "MediaPrefix": "https://fetch-estranged-pointer.ngrok-free.dev/media"
   },
   "ExpirationOptions": {
     "BotUserExpirationSeconds": 3600,
