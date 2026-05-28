@@ -175,7 +175,8 @@ namespace Persistence.Repositories
                         @first_name,
                         @last_name,
                         @tag,
-                        @birth_date)
+                        @birth_date,
+                        @bio)
                     """;
                 var birth = registerUserModel.BirthDate.HasValue
                     ? registerUserModel.BirthDate.Value.ToDateTime(TimeOnly.MinValue)
@@ -187,7 +188,8 @@ namespace Persistence.Repositories
                     first_name = registerUserModel.FirstName,
                     last_name = registerUserModel.LastName,
                     tag = registerUserModel.Tag,
-                    birth_date = birth
+                    birth_date = birth,
+                    bio = registerUserModel.Bio
                 }, cancellationToken)).ConfigureAwait(false);
             }
             catch (PostgresException ex)

@@ -7,6 +7,7 @@ using Npgsql;
 using Prometheus;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.Grafana.Loki;
 using Serilog.Sinks.GrafanaLoki;
 
 namespace MaintenanceAPI
@@ -45,21 +46,35 @@ namespace MaintenanceAPI
                 return dataSourceBuilder.Build();
             });
 
-            GrafanaLokiCredentials lokiCredentials = new GrafanaLokiCredentials()
+            ConfigurationManager configuration = builder.Configuration;
+            LokiCredentials lokiCredentials = new LokiCredentials()
             {
-                User = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
+                Login = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
                 Password = builder.Configuration.GetSection("LokiOptions").GetValue<string>("Password") ?? throw new ArgumentNullException("Loki Password")
             };
+
             Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(builder.Configuration)
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
                 .WriteTo.GrafanaLoki(
-                    builder.Configuration.GetSection("LokiOptions").GetValue<string>("URI") ?? throw new ArgumentNullException("Loki URI"),
-                    lokiCredentials,
-                    new Dictionary<string, string> { { "app", $"MediaAPI" } },
-                    LogEventLevel.Information
+                    builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
+                    credentials: lokiCredentials,
+                    labels: new List<LokiLabel>()
+                    {
+                        new()
+                        {
+                            Key = "app",
+                            Value = "MediaAPI"
+                        }
+                    },
+                    propertiesAsLabels: new[]
+                    {
+                        "level"
+                    },
+                    restrictedToMinimumLevel: LogEventLevel.Information
                 ).CreateLogger();
+
             builder.Host.UseSerilog();
-            builder.Logging.AddSerilog();
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
 

@@ -15,6 +15,12 @@
             HttpRequest request = httpContext.Request;
             HttpResponse response = httpContext.Response;
 
+            if (request.Path.StartsWithSegments("/metrics"))
+            {
+                await _next(httpContext);
+                return;
+            }
+
             LogRequestStarted(_logger, LogLevel.Information, request.Method, request.Path.Value);
 
             try

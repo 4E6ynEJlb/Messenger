@@ -24,7 +24,8 @@ namespace Application.Models.Input
                 FirstName = FirstName,
                 LastName = LastName,
                 Tag = Tag,
-                BirthDate = BirthDate
+                BirthDate = BirthDate,
+                Bio = Bio
             };
 
     }

@@ -44,11 +44,11 @@ BEGIN
             FROM deleted
         );
 
-        EXECUTE 'DROP TABLE IF EXISTS private.public_messages_attachments_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.public_messages_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_members_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_audit_logs_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_banned_users_' || chat_id_converted_to_text;
+        EXECUTE 'DROP TABLE IF EXISTS private.public_messages_attachments_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.public_messages_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_banned_users_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_audit_logs_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.public_chats_members_' || chat_id_converted_to_text || ' CASCADE';
 
         DELETE FROM private.media
         WHERE media_id = (
@@ -88,8 +88,8 @@ BEGIN
             FROM deleted
         );
 
-        EXECUTE 'DROP TABLE IF EXISTS private.personal_messages_attachments_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.personal_messages_' || chat_id_converted_to_text;
+        EXECUTE 'DROP TABLE IF EXISTS private.personal_messages_attachments_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.personal_messages_' || chat_id_converted_to_text || ' CASCADE';
 
         DELETE FROM private.personal_chats
         WHERE personal_chats.chat_id = deleting_chat_id;
@@ -118,8 +118,8 @@ BEGIN
             FROM deleted
         );
 
-        EXECUTE 'DROP TABLE IF EXISTS private.bot_messages_attachments_' || chat_id_converted_to_text;
-        EXECUTE 'DROP TABLE IF EXISTS private.bot_messages_' || chat_id_converted_to_text;
+        EXECUTE 'DROP TABLE IF EXISTS private.bot_messages_attachments_' || chat_id_converted_to_text || ' CASCADE';
+        EXECUTE 'DROP TABLE IF EXISTS private.bot_messages_' || chat_id_converted_to_text || ' CASCADE';
 
         DELETE FROM private.bot_chats
         WHERE bot_chats.chat_id = deleting_chat_id;
@@ -186,7 +186,7 @@ BEGIN
       AND (to_date(replace(table_name, 'administrators_actions_log_', ''), 'YYYY-MM') + (expiration_months || ' month')::interval) <= now();
 
     FOREACH deleting_table_name IN ARRAY deleting_tables LOOP
-        EXECUTE 'DROP TABLE IF EXISTS private.' || deleting_table_name;
+        EXECUTE 'DROP TABLE IF EXISTS private.' || deleting_table_name || ' CASCADE';
     END LOOP;
 END;
 $$
@@ -613,7 +613,7 @@ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION sch_user.register_user(user_login dom_auth_string, user_password dom_auth_string, first_name varchar(32),
-                              last_name varchar(32), tag varchar(16), birth_date timestamp)
+                              last_name varchar(32), tag varchar(16), birth_date timestamp, bio varchar(512))
 RETURNS uuid
 SECURITY DEFINER
 SET search_path = sch_user, public, private
@@ -627,9 +627,10 @@ DECLARE
     media_fk_name text = 'avatars_media_' || user_id_text || '_media_id_fkey';
     salty_user_password text = user_password || user_id_text;
 BEGIN
-    INSERT INTO private.users (login_hash, password_hash, first_name, last_name, tag, birth_date, was_online, user_id) VALUES
+    INSERT INTO private.users (login_hash, password_hash, first_name, last_name, tag, birth_date, bio, was_online, user_id) VALUES
         (sha256(user_login::bytea), sha256(salty_user_password::bytea),
-            register_user.first_name, register_user.last_name, register_user.tag, register_user.birth_date, CURRENT_TIMESTAMP, new_user_id);
+            register_user.first_name, register_user.last_name, register_user.tag, register_user.birth_date, 
+            register_user.bio, CURRENT_TIMESTAMP, new_user_id);
 
     EXECUTE 'CREATE TABLE ' || avatars_table_name ||
             ' PARTITION OF private.avatars FOR VALUES IN (''' ||
@@ -1023,7 +1024,7 @@ BEGIN
     DELETE FROM private.media
     WHERE media_id IN (SELECT media_id FROM private.avatars WHERE avatars.user_id = delete_user.user_id);
 
-    EXECUTE 'DROP TABLE IF EXISTS ' || avatars_table_name;
+    EXECUTE 'DROP TABLE IF EXISTS ' || avatars_table_name || ' CASCADE';
 
     DELETE FROM private.users
     WHERE users.user_id = delete_user.user_id
@@ -1767,7 +1768,7 @@ BEGIN
             SELECT unnest(msg.attached_media), new_message_id, resend_to_private_messages.chat_id;
             UPDATE private.media
             SET links_count = links_count + 1
-            WHERE media_id IN (msg.attached_media);
+            WHERE media_id = ANY(msg.attached_media);
         END IF;
         RETURN NEXT new_message_id;
     END LOOP;
@@ -1982,8 +1983,8 @@ BEGIN
         FROM deleted
         );
 
-    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name;
+    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name || ' CASCADE';
 
     DELETE FROM private.personal_chats
     WHERE personal_chats.chat_id = delete_personal_chat.chat_id;
@@ -2509,7 +2510,7 @@ BEGIN
 
             UPDATE private.media
             SET links_count = links_count + 1
-            WHERE media_id IN (msg.attached_media);
+            WHERE media_id = ANY(msg.attached_media);
         END IF;
 
         RETURN NEXT new_message_id;
@@ -2789,11 +2790,11 @@ BEGIN
         FROM deleted
         );
 
-    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || members_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || audit_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || banned_table_name;
+    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || audit_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || banned_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || members_table_name || ' CASCADE';
 
     DELETE FROM private.media
     WHERE media_id = (
@@ -3502,7 +3503,7 @@ BEGIN
 
             UPDATE private.media
             SET links_count = links_count + 1
-            WHERE media_id IN (msg.attached_media);
+            WHERE media_id = ANY(msg.attached_media);
         END IF;
         RETURN NEXT new_message_id;
     END LOOP;
@@ -3589,8 +3590,8 @@ BEGIN
         SELECT attachment_id
         FROM deleted);
 
-    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name;
-    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name;
+    EXECUTE 'DROP TABLE IF EXISTS ' || attachments_table_name || ' CASCADE';
+    EXECUTE 'DROP TABLE IF EXISTS ' || messages_table_name || ' CASCADE';
 
     DELETE FROM private.bot_chats bc
     WHERE bc.chat_id = delete_bot_chat.chat_id;

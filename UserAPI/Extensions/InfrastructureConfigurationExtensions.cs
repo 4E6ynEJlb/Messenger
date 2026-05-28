@@ -9,7 +9,7 @@ using Minio.AspNetCore;
 using Npgsql;
 using Serilog;
 using Serilog.Events;
-using Serilog.Sinks.GrafanaLoki;
+using Serilog.Sinks.Grafana.Loki;
 using StackExchange.Redis;
 
 namespace UserAPI.Extensions
@@ -66,25 +66,44 @@ namespace UserAPI.Extensions
         public static void ConfigureLogging(this WebApplicationBuilder builder)
         {
             ConfigurationManager configuration = builder.Configuration;
-            GrafanaLokiCredentials lokiCredentials = new GrafanaLokiCredentials()
+            LokiCredentials lokiCredentials = new LokiCredentials()
             {
-                User = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
+                Login = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
                 Password = builder.Configuration.GetSection("LokiOptions").GetValue<string>("Password") ?? throw new ArgumentNullException("Loki Password")
             };
+
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
                 .WriteTo.GrafanaLoki(
-                    builder.Configuration.GetSection("LokiOptions").GetValue<string>("URI") ?? throw new ArgumentNullException("Loki URI"),
-                    lokiCredentials,
-                    new Dictionary<string, string> { { "app", $"UserAPI-{Environment.GetEnvironmentVariable("GROUP_ID")}" } },
-                    LogEventLevel.Information
+                    builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
+                    credentials: lokiCredentials,
+                    labels: new List<LokiLabel>()
+                    {
+                        new()
+                        {
+                            Key = "app",
+                            Value = "UserAPI"
+                        },
+                
+                        new()
+                        {
+                            Key = "instance",
+                            Value = Environment.GetEnvironmentVariable("GROUP_ID") ?? "unknown"
+                        }
+                    },
+                    propertiesAsLabels: new[]
+                    {
+                        "level"
+                    },
+                    restrictedToMinimumLevel: LogEventLevel.Information
                 ).CreateLogger();
+
             builder.Host.UseSerilog();
-            builder.Logging.AddSerilog();
         }
 
         public static void ConfigureBus(this WebApplicationBuilder builder)
-        {            
+        {
             builder.Services.AddScoped(typeof(ConsumeLoggingFilter<>));
             builder.Services.AddMassTransit(x =>
             {
