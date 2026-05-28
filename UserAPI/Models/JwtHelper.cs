@@ -15,7 +15,7 @@ namespace UserAPI.Models
                 audience: "user-api-audience",
                 notBefore: utcNow,
                 claims: CreateClaims(id, role).Claims,
-                expires: utcNow.Add(TimeSpan.FromMinutes(5)),
+                expires: utcNow.Add(TimeSpan.FromMinutes(25)),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes("c2Rvdmpvc2lkam5qZ293am8xMjM0MzI0NW8yaTM0NTFvMzVpMzJ1NjB1Mm9paGpyb3V3ZjlodzM0OXJoajk=")), SecurityAlgorithms.HmacSha256));
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
