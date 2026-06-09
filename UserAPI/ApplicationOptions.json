@@ -1,0 +1,13 @@
+{
+  "ApplicationServicesOptions": {
+    "MediaPrefix": "https://fetch-estranged-pointer.ngrok-free.dev/media"
+  },
+  "ExpirationOptions": {
+    "BotUserExpirationSeconds": 3600,
+    "MessagesExpirationSeconds": 600
+  },
+  "TokenExpirationOptions": {
+    "RememberingHours": 744, //31 days
+    "EphemeralHours": 1
+  }
+}

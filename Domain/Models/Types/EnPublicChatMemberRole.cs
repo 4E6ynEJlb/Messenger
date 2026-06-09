@@ -5,6 +5,6 @@
         Reader,
         Member,
         Administrator,
-        Owner
+        Creator
     }
 }

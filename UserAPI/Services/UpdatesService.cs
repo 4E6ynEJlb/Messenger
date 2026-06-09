@@ -1,64 +1,51 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Application.Models.Internal.Constants;
+using Microsoft.AspNetCore.SignalR;
 using UserAPI.Hubs;
-using UserAPI.Services.Interfaces;
+using Application.Services.Interfaces;
 
 namespace UserAPI.Services
 {
     public class UpdatesService : IUpdatesService
     {
-        private readonly UpdatesHub _updatesHub;
-        public UpdatesService(UpdatesHub updatesHub)
+        private readonly IHubContext<UpdatesHub> _updatesHub;
+        public UpdatesService(IHubContext<UpdatesHub> updatesHub)
         {
             _updatesHub = updatesHub;
         }
 
-        public async Task NewBotMessage(Guid chatId, Guid messageId, Guid receiver)
+        public async Task MessagesSent(Guid chatId, Guid[] messagesId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .User(receiver.ToString())
-                .SendAsync("NewBotMessage", chatId, messageId);
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("MessageSent", chatId, messagesId, chatType, cancellationToken);
         }
 
-        public async Task NewPrivateMessage(Guid chatId, Guid messageId, Guid[] receivers)
+        public async Task MessageUpdated(Guid chatId, Guid messageId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .Users(receivers.Select(r => r.ToString()).ToList())
-                .SendAsync("NewPrivateMessage", chatId, messageId);
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("MessageUpdated", chatId, messageId, chatType, cancellationToken);
         }
 
-        public async Task NewPublicMessage(Guid chatId, Guid messageId, Guid[] receivers)
+        public async Task MessageDeleted(Guid chatId, Guid messageId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .Users(receivers.Select(r => r.ToString()).ToList())
-                .SendAsync("NewPublicMessage", chatId, messageId);
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("MessageDeleted", chatId, messageId, chatType, cancellationToken);
+        }
+        
+        public async Task FileDeleted(Guid chatId, string file, Guid messageId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
+        {
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("FileDeleted", chatId, file, messageId, chatType, cancellationToken);
         }
 
-        public async Task PrivateMessagesRead(Guid chatId, Guid[] messagesId, Guid receiver)
+        public async Task ChatDeleted(Guid chatId, Guid[] userId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .User(receiver.ToString())
-                .SendAsync("PrivateMessagesRead", chatId, messagesId);
+            await _updatesHub.Clients.Users(userId.Select(u => u.ToString()).ToArray()).SendAsync("ChatDeleted", chatId, chatType, cancellationToken);
         }
 
-        public async Task PublicMessagesRead(Guid chatId, Guid userId, Guid[] messagesId, Guid receiver)
+        public async Task UserIsTyping(Guid chatId, Guid typingUserId, Guid[] destinationUserId, ChatType chatType, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .User(receiver.ToString())
-                .SendAsync("PublicMessagesRead", chatId, userId, messagesId);
+            await _updatesHub.Clients.Users(destinationUserId.Select(u => u.ToString()).ToArray()).SendAsync("UserIsTyping", chatId, typingUserId, chatType, cancellationToken);
         }
 
-        public async Task UserTypingPrivate(Guid chatId, Guid userId, Guid receiver)
+        public async Task BotButtonsUpdated(Guid chatId, Guid userId, CancellationToken cancellationToken)
         {
-            await _updatesHub.Clients
-                .User(receiver.ToString())
-                .SendAsync("UserTypingPrivate", chatId, userId);
-        }
-
-        public async Task UserTypingPublic(Guid chatId, Guid userId, Guid[] receivers)
-        {
-            await _updatesHub.Clients
-                .Users(receivers.Select(r => r.ToString()).ToList())
-                .SendAsync("UserTypingPublic", chatId, userId);
+            await _updatesHub.Clients.User(userId.ToString()).SendAsync("BotButtonsUpdated", chatId, cancellationToken);
         }
     }
 }
