@@ -767,11 +767,8 @@ SELECT
 FROM (
     -- PERSONAL CHATS
     SELECT
-        pcm1.chat_id,
-        COALESCE(
-            CONCAT(users.first_name, ' ', COALESCE(users.last_name, '')),
-            'Deleted user'
-        ) AS chat_name,
+        pcm1.chat_id,        
+        CONCAT(COALESCE(users.first_name, 'Deleted user'), ' ', COALESCE(users.last_name, '')) AS chat_name,
         nmc.new_messages_count,
         users.avatar AS chat_image,
         'Personal'::en_chat_type AS chat_type,
@@ -1381,7 +1378,7 @@ DECLARE
     affected_rows int;
     avatar_id uuid;
 BEGIN
-    PERFORM private.update_user_online_status(delete_public_message.deleting_by);
+    PERFORM private.update_user_online_status(delete_bot.deleting_by);
 
     IF NOT exists(
         SELECT 1
@@ -1421,7 +1418,7 @@ $$
 DECLARE
     affected_rows int;
 BEGIN
-    PERFORM private.update_user_online_status(delete_file_from_public_message.deleting_by);
+    PERFORM private.update_user_online_status(delete_command.deleting_by);
 
     IF NOT exists(
         SELECT 1
@@ -1637,7 +1634,7 @@ BEGIN
             ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
             ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE SET NULL ON UPDATE CASCADE';
+            ' ON DELETE SET NULL (reply_to) ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
             ' PARTITION OF private.personal_messages_attachments FOR VALUES IN (''' ||
@@ -2254,7 +2251,7 @@ BEGIN
             ' ADD CONSTRAINT ' || members_fk_to_chats_name ||
             ' FOREIGN KEY (chat_id) REFERENCES private.public_chats(chat_id) ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || members_fk_to_users_name ||
-            ' FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE';
+            ' FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || banned_table_name ||
             ' PARTITION OF private.public_chats_banned_users FOR VALUES IN (''' ||
@@ -2279,7 +2276,7 @@ BEGIN
             ' ON DELETE SET NULL ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
             ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE SET NULL ON UPDATE CASCADE';
+            ' ON DELETE SET NULL (reply_to) ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
             ' PARTITION OF private.public_messages_attachments FOR VALUES IN (''' ||
@@ -2842,6 +2839,11 @@ BEGIN
 
     PERFORM private.update_user_online_status(giving_by);
 
+    SELECT pcm.role INTO giving_by_role
+    FROM public_chats_members pcm
+    WHERE pcm.user_id = giving_by
+      AND pcm.chat_id = give_public_chat_member_role.chat_id;
+
     IF giving_by_role IS NULL OR NOT exists(
         SELECT 1
         FROM public_chats_members
@@ -2849,11 +2851,6 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
-
-    SELECT pcm.role INTO giving_by_role
-    FROM public_chats_members pcm
-    WHERE pcm.user_id = giving_by
-      AND pcm.chat_id = give_public_chat_member_role.chat_id;
 
     IF role = 'Creator' AND giving_by_role != 'Creator' THEN
         RAISE EXCEPTION 'Only the creator can assign the creator role.' USING ERRCODE = '42501';
@@ -2991,7 +2988,7 @@ BEGIN
 
             UPDATE private.public_chats pc
             SET avatar = update_public_chat.avatar.media_id
-            WHERE chat_id = update_public_chat.chat_id;
+            WHERE pc.chat_id = update_public_chat.chat_id;
         END IF;
     END IF;
 
@@ -3000,7 +2997,7 @@ BEGIN
         avatar = coalesce(update_public_chat.avatar.media_id, pc.avatar),
         is_searchable = coalesce(update_public_chat.is_searchable, pc.is_searchable),
         default_member_role = coalesce(update_public_chat.default_member_role, pc.default_member_role)
-    WHERE chat_id = update_public_chat.chat_id;
+    WHERE pc.chat_id = update_public_chat.chat_id;
 
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
 
@@ -3108,7 +3105,7 @@ BEGIN
     WHERE pcm.chat_id = unban_user.chat_id
       AND pcm.user_id = unban_user.user_id;
 
-    IF unbanning_by_role IS NULL OR user_role IS NULL THEN
+    IF unbanning_by_role IS NULL THEN
         RAISE EXCEPTION 'The requested resource was not found.' USING ERRCODE = 'P0002';
     END IF;
 
@@ -3371,7 +3368,7 @@ BEGIN
             ' ON DELETE CASCADE ON UPDATE CASCADE,' ||
             ' ADD CONSTRAINT ' || messages_reply_to_fk_name ||
             ' FOREIGN KEY (chat_id, reply_to) REFERENCES ' || messages_table_name || '(chat_id, message_id)' ||
-            ' ON DELETE SET NULL ON UPDATE CASCADE';
+            ' ON DELETE SET NULL (reply_to) ON UPDATE CASCADE';
 
     EXECUTE 'CREATE TABLE ' || attachments_table_name ||
             ' PARTITION OF private.bot_messages_attachments FOR VALUES IN (''' ||

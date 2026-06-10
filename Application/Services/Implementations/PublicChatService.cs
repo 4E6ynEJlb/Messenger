@@ -269,7 +269,7 @@ namespace Application.Services.Implementations
         public async Task UpdateChatAsync(Guid userId, Guid chatId, string? newName, bool? isSearchable, bool updateAvatar, FileUpload? newAvatar, PublicChatMemberRole? defaultRole, CancellationToken cancellationToken)
         {
             Guid? newAvatarId = newAvatar is not null ? Guid.NewGuid() : null;
-            await _publicChatStore.UpdateChatAsync(chatId, userId, newName, isSearchable, updateAvatar, newAvatar?.ToMediaFile(Guid.NewGuid()), (defaultRole.HasValue ? ChatRoleConverter.Convert(defaultRole.Value) : null), cancellationToken);
+            await _publicChatStore.UpdateChatAsync(chatId, userId, newName, isSearchable, updateAvatar, newAvatar?.ToMediaFile(newAvatarId!.Value), (defaultRole.HasValue ? ChatRoleConverter.Convert(defaultRole.Value) : null), cancellationToken);
             if (updateAvatar && newAvatar is not null && newAvatarId.HasValue)
             {
                 await _objectStorage.SaveAsync(newAvatar.Content, newAvatarId.Value, cancellationToken);

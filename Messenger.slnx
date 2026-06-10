@@ -3,6 +3,7 @@
     <File Path="migrations/V1__init.sql" />
     <File Path="migrations/V2__tables.sql" />
     <File Path="migrations/V3__maintenance_and_user_functions.sql" />
+    <File Path="migrations/V4__remake_user_messages_functions.sql" />
   </Folder>
   <Folder Name="/nginx/">
     <File Path="nginx/nginx.conf" />
@@ -10,17 +11,14 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Folder Name="/Элементы решения/">
-    <File Path="prometheus.yml" />
-  </Folder>
   <Project Path="Application/Application.csproj" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
-  <Project Path="Domain/Domain.csproj" Id="59d1402d-cb45-4456-bf43-9ffdca267e07" />
-  <Project Path="Infrastructure/Infrastructure.csproj" Id="e074b5e6-857a-4181-b9bf-b4db5cc2584c" />
-  <Project Path="Maintenance/Maintenance.csproj" Id="0fe61854-75a6-4c84-a59e-838a212381c6" />
+  <Project Path="Domain/Domain.csproj" />
+  <Project Path="Infrastructure/Infrastructure.csproj" />
+  <Project Path="Maintenance/Maintenance.csproj" />
   <Project Path="MediaAPI/MediaAPI.csproj" />
-  <Project Path="Persistence/Persistence.csproj" Id="ef636132-b653-49c5-8337-10c9ec81bba9" />
+  <Project Path="Persistence/Persistence.csproj" />
   <Project Path="UserAPI/UserAPI.csproj" />
 </Solution>
