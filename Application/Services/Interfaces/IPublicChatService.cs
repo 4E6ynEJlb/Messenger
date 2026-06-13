@@ -17,7 +17,7 @@ namespace Application.Services.Interfaces
         public Task<PublicChatAuditRecord[]> AuditChatAsync(Guid userId, Guid chatId, PageOptions pageOptions, CancellationToken cancellationToken);
         public Task<Guid> CreateChatAsync(Guid creatorId, string name, bool isSearchable, FileUpload? avatar, PublicChatMemberRole defaultRole, CancellationToken cancellationToken);
         public Task JoinChatAsync(Guid chatId, Guid userId, CancellationToken cancellationToken);
-        public Task<Guid> SendMessageAsync(Guid userId, SendingMessage sendingMessage, CancellationToken cancellationToken);
+        public Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken);
         public Task<Guid[]> ResendMessagesAsync(Guid userId, ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken);
         public Task HandleUserTypingEventAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
         public Task EditMessageTextAsync(Guid userId, UpdatingMessage updatingMessage, CancellationToken cancellationToken);
@@ -26,7 +26,7 @@ namespace Application.Services.Interfaces
         public Task BanUserAsync(Guid userId, Guid chatId, Guid bannedUserId, CancellationToken cancellationToken);
         public Task UnbanUserAsync(Guid userId, Guid chatId, Guid unbannedUserId, CancellationToken cancellationToken);
         public Task DeleteMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken);
-        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid mediaId, CancellationToken cancellationToken);
+        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken);
         public Task LeaveChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
         public Task RemoveMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken);
         public Task RemoveAndBanChatMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken);

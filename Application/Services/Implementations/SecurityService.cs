@@ -13,7 +13,7 @@ namespace Application.Services.Implementations
             _securityStore = securityStore;
         }
 
-        public async Task ReportAdministrator(Guid userId, int adminId, string? comment, CancellationToken cancellationToken)
+        public async Task ReportAdministratorAsync(Guid userId, int adminId, string? comment, CancellationToken cancellationToken)
         {
             await _securityStore.ReportAdministratorAsync(userId, adminId, comment, cancellationToken);
         }

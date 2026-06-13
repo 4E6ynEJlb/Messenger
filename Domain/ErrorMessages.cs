@@ -67,5 +67,7 @@
         public const string INVALID_REQUEST_DATA = "The request data is invalid.";
 
         public const string FORBIDDEN_OPERATION = "This operation is not allowed.";
+
+        public const string VALIDATION_ERROR = "Field {0} value is invalid.";
     }
 }

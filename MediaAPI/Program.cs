@@ -1,10 +1,14 @@
-
 using Infrastructure.Database;
 using Infrastructure.Storage;
-using Microsoft.AspNetCore.Connections;
+using MediaAPI.Middleware;
 using Minio;
 using Minio.AspNetCore;
 using Npgsql;
+using Prometheus;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.Grafana.Loki;
+using Serilog.Sinks.GrafanaLoki;
 
 namespace MaintenanceAPI
 {
@@ -22,7 +26,13 @@ namespace MaintenanceAPI
             builder.Configuration.AddJsonFile("infrastructureoptions.json");
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+                {
+                    Url = "/media"
+                });
+            });
             builder.Services.AddSingleton(sp =>
             {
                 var cs = builder.Configuration
@@ -35,6 +45,36 @@ namespace MaintenanceAPI
 
                 return dataSourceBuilder.Build();
             });
+
+            ConfigurationManager configuration = builder.Configuration;
+            LokiCredentials lokiCredentials = new LokiCredentials()
+            {
+                Login = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
+                Password = builder.Configuration.GetSection("LokiOptions").GetValue<string>("Password") ?? throw new ArgumentNullException("Loki Password")
+            };
+
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
+                .WriteTo.GrafanaLoki(
+                    builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
+                    credentials: lokiCredentials,
+                    labels: new List<LokiLabel>()
+                    {
+                        new()
+                        {
+                            Key = "app",
+                            Value = "MediaAPI"
+                        }
+                    },
+                    propertiesAsLabels: new[]
+                    {
+                        "level"
+                    },
+                    restrictedToMinimumLevel: LogEventLevel.Information
+                ).CreateLogger();
+
+            builder.Host.UseSerilog();
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
 
@@ -51,15 +91,23 @@ namespace MaintenanceAPI
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwagger(c=>c.RouteTemplate = "swagger/{documentName}/swagger.json");
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/media/swagger/v1/swagger.json", "Media API V1");
+                    c.RoutePrefix = "swagger";
+                });
             }
 
-            app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
+            app.UseMiddleware<TelemetryMiddleware>();
+            app.UseMiddleware<LoggingMiddleware>();
+            app.UseMiddleware<ExceptionMiddleware>();
 
+
+            app.MapMetrics();
             app.MapControllers();
 
             app.Run();

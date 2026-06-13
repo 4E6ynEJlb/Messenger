@@ -1,5 +1,5 @@
 ﻿using Application.Models.Helpers;
-using Application.Models.Internal;
+using Application.Models.Internal.Constants;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Application.Models.Output

@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using Domain.Models.Types;
+using Npgsql;
 
 namespace Infrastructure.Database
 {

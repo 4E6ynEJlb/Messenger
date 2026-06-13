@@ -6,7 +6,7 @@ namespace UserAPI.Extensions
     {
         public static Guid GetUserId(this HttpContext context)
         {
-            var userIdClaim = context.User.FindFirst(ClaimsIdentity.DefaultNameClaimType)?.Value;
+            var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
             {
                 throw new Exception("User ID claim is missing or invalid.");

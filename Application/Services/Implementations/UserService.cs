@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Services.Implementations
 {
-    internal class UserService : IUserService
+    public class UserService : IUserService
     {
         private readonly string _mediaPrefix;
         private readonly IBotUserCacheService _cache;
@@ -36,7 +36,7 @@ namespace Application.Services.Implementations
         public async Task DeleteAvatarAsync(Guid id, string mediaLink, CancellationToken cancellationToken)
         {
             if (!Guid.TryParse(mediaLink[(_mediaPrefix.Length + 1)..], out Guid mediaId))
-                return;
+                throw new DataValidationException("mediaLink");
             await _cache.InvalidateAsync(id, cancellationToken);
             await _userStore.DeleteUserAvatarAsync(id, mediaId, cancellationToken);
         }
@@ -93,6 +93,7 @@ namespace Application.Services.Implementations
         {
             UserData userData = updateUser.ToUserData(id);
             await _userStore.UpdateUserDataAsync(userData, cancellationToken);
+            await _cache.InvalidateAsync(id, cancellationToken);
         }
 
         public async Task UploadAvatarAsync(Guid id, FileUpload file, CancellationToken cancellationToken)
@@ -100,6 +101,7 @@ namespace Application.Services.Implementations
             Guid mediaId = Guid.NewGuid();
             await _userStore.UploadUserAvatarAsync(id, file.ToMediaFile(mediaId), cancellationToken);
             await _objectStorage.SaveAsync(file.Content, mediaId, cancellationToken);
+            await _cache.InvalidateAsync(id, cancellationToken);
         }
     }
 }

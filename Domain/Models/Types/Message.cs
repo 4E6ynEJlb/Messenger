@@ -4,7 +4,7 @@
     {
         public required Guid MessageId { get; init; }
         public required Guid Author { get; init; }
-        public required string MessageText { get; init; }
+        public required string? MessageText { get; init; }
         public required DateTime SentAt { get; init; }
         public required bool IsUpdated { get; init; }
         public required DateTime? UpdatedAt { get; init; }

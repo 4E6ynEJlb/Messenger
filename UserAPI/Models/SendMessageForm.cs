@@ -1,4 +1,5 @@
 ﻿using Application.Models.Internal;
+using UserAPI.Extensions;
 
 namespace Application.Models.Input
 {
@@ -14,5 +15,13 @@ namespace Application.Models.Input
         /// </summary>
         public Guid? ReplyTo { get; init; }
         public IFormFile[]? Attachments { get; init; }
+        public SendingMessage ToSendingMessage(Guid userId) => new SendingMessage()
+        {
+            ChatId = ChatId,
+            MessageText = MessageText,
+            ReplyTo = ReplyTo,
+            Author = userId,
+            Attachments = Attachments?.Select(a => a.ToFileUpload()).ToArray()
+        };        
     }
 }
