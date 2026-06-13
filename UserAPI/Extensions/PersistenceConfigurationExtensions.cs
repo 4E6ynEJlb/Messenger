@@ -1,6 +1,7 @@
 ﻿using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
+using Persistence;
 using Persistence.Repositories;
 
 namespace UserAPI.Extensions
@@ -16,6 +17,7 @@ namespace UserAPI.Extensions
             builder.Services.AddScoped<IPublicChatStore, PublicChatRepository>();
             builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenRepository>();
             builder.Services.AddScoped<ISecurityStore, SecurityRepository>();
+            builder.Services.AddUnitOfWorkRepositories();
         }
     }
 }

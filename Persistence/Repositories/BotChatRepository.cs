@@ -4,7 +4,6 @@ using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
 using Persistence.Exceptions;
-using Persistence;
 
 namespace Persistence.Repositories
 {
@@ -25,6 +24,26 @@ namespace Persistence.Repositories
                 const string sql = "SELECT sch_user.initialize_new_bot_chat(@user_id, @bot_id)";
                 return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql,
                     new { user_id = userId, bot_id = botId }, cancellationToken)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
+        public async Task<bool> CheckMessageSendingAbilityAsync(Guid chatId, Guid senderId, Guid? replyTo,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
+                const string sql = "SELECT sch_user.check_bot_message_send_ability(@chat_id, @author, @reply_to)";
+                return await conn.ExecuteScalarAsync<bool>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    author = senderId,
+                    reply_to = replyTo
+                }, cancellationToken)).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -200,59 +219,6 @@ namespace Persistence.Repositories
             {
                 throw PostgresUserExceptionMapper.For(ex);
             }
-        }
-
-        public async Task<Guid[]> ResendMessagesAsync(Guid chatId, Guid senderId, EnChatType sourceChatType, Guid sourceChatId,
-            Guid[] messages, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql = """
-                    SELECT * FROM sch_user.resend_to_bot_messages(
-                        @chat_id,
-                        @author,
-                        @source_chat_type,
-                        @source_chat_id::en_chat_type,
-                        @messages_id)
-                    """;
-                var rows = await conn.QueryAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    author = senderId,
-                    source_chat_type = sourceChatType.ToString(),
-                    source_chat_id = sourceChatId,
-                    messages_id = messages
-                }, cancellationToken)).ConfigureAwait(false);
-                return rows.ToArray();
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
-
-        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string? text, MediaFile[]? attachments,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql =
-                    "SELECT sch_user.send_bot_message(@chat_id, @author, @message_text, @attachments, @reply_to)";
-                return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    author = senderId,
-                    message_text = text,
-                    attachments,
-                    reply_to = replyTo
-                }, cancellationToken)).ConfigureAwait(false);
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
+        }                
     }
 }

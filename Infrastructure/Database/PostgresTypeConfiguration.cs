@@ -26,6 +26,7 @@ namespace Infrastructure.Database
             builder.MapComposite<BotCommandInfo>("bot_command_info");
             builder.MapComposite<BotConnectionLogRecord>("bot_connection_log_record");
             builder.MapComposite<BotButtonInfo>("bot_button_info");
+            builder.MapComposite<MessageInput>("message_input");
             return builder;
         }
 

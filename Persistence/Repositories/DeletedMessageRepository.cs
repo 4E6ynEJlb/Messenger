@@ -1,0 +1,48 @@
+﻿using Domain.Models.Documents;
+using Domain.Stores.MongoDB;
+using Infrastructure.Database;
+using MongoDB.Driver;
+
+namespace Persistence.Repositories
+{
+    public class DeletedMessageRepository : IDeletedMessageStore
+    {
+        private readonly IMongoCollection<DeletedMessage> _collection;
+
+        public DeletedMessageRepository(UpdatesContext context)
+        {
+            _collection = context.DeletedMessages;
+        }
+
+        public async Task<DeletedMessage?> GetOneEldestAsync(CancellationToken cancellationToken)
+        {
+            return await _collection.Find(FilterDefinition<DeletedMessage>.Empty)
+                .SortBy(x => x.DeletedAt).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<bool> CheckDeletionByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _collection.Find(x => x.MessageId == id)
+                .AnyAsync(cancellationToken);
+        }
+
+        public async Task<bool> CreateAsync(DeletedMessage deletedMessage, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _collection.InsertOneAsync(deletedMessage, cancellationToken: cancellationToken);
+                return true;
+            }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
+        {
+            DeleteResult result = await _collection.DeleteOneAsync(x => x.MessageId == id, cancellationToken);
+            return result.DeletedCount > 0;
+        }
+    }
+}

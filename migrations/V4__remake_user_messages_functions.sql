@@ -1,6 +1,9 @@
 ﻿DROP FUNCTION IF EXISTS sch_user.send_personal_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
 DROP FUNCTION IF EXISTS sch_user.send_public_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
 DROP FUNCTION IF EXISTS sch_user.send_bot_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
+DROP FUNCTION IF EXISTS sch_user.resend_personal_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
+DROP FUNCTION IF EXISTS sch_user.resend_public_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
+DROP FUNCTION IF EXISTS sch_user.resend_bot_message(chat_id uuid, author uuid, message_text text, attachments media_file[], reply_to uuid);
 
 CREATE OR REPLACE FUNCTION sch_user.check_personal_message_send_ability(chat_id uuid, author uuid, reply_to uuid DEFAULT NULL)
 RETURNS bool
@@ -509,7 +512,8 @@ BEGIN
                 updated_at = update_message_text.updated_at,
                 is_updated = true
             WHERE pm.chat_id = update_message_text.chat_id
-              AND pm.message_id = update_message_text.message_id;
+              AND pm.message_id = update_message_text.message_id
+              AND pm.updated_at < update_message_text.updated_at;
 
         WHEN 'Personal'::en_chat_type THEN
             UPDATE private.personal_messages pm
@@ -517,7 +521,8 @@ BEGIN
                 updated_at = update_message_text.updated_at,
                 is_updated = true
             WHERE pm.chat_id = update_message_text.chat_id
-              AND pm.message_id = update_message_text.message_id;
+              AND pm.message_id = update_message_text.message_id
+              AND pm.updated_at < update_message_text.updated_at;
 
         WHEN 'Bot'::en_chat_type THEN
             UPDATE private.bot_messages bm
@@ -525,7 +530,8 @@ BEGIN
                 updated_at = update_message_text.updated_at,
                 is_updated = true
             WHERE bm.chat_id = update_message_text.chat_id
-              AND bm.message_id = update_message_text.message_id;
+              AND bm.message_id = update_message_text.message_id
+              AND bm.updated_at < update_message_text.updated_at;
 
         ELSE RAISE DATATYPE_MISMATCH;
     END CASE;
@@ -536,72 +542,3 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION private.delete_message(chat_type en_chat_type, chat_id uuid, message_id uuid)
-RETURNS int
-SECURITY DEFINER
-AS
-$$
-DECLARE
-    affected_rows int;
-BEGIN
-    CASE chat_type
-        WHEN 'Public'::en_chat_type THEN
-            DELETE FROM private.public_messages pm
-            WHERE pm.chat_id = delete_message.chat_id
-              AND pm.message_id = delete_message.message_id;
-
-        WHEN 'Personal'::en_chat_type THEN
-            DELETE FROM private.personal_messages pm
-            WHERE pm.chat_id = delete_message.chat_id
-              AND pm.message_id = delete_message.message_id;
-
-        WHEN 'Bot'::en_chat_type THEN
-            DELETE FROM private.bot_messages bm
-            WHERE bm.chat_id = delete_message.chat_id
-              AND bm.message_id = delete_message.message_id;
-
-        ELSE RAISE DATATYPE_MISMATCH;
-    END CASE;
-
-    GET DIAGNOSTICS affected_rows = ROW_COUNT;
-    RETURN affected_rows;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION private.delete_attachment(chat_type en_chat_type, chat_id uuid, media_id uuid)
-RETURNS int
-SECURITY DEFINER
-AS
-$$
-DECLARE
-    affected_rows int;
-BEGIN
-    CASE chat_type
-        WHEN 'Public'::en_chat_type THEN
-            DELETE FROM private.public_messages_attachments pma
-            WHERE pma.chat_id = delete_attachment.chat_id
-              AND pma.message_id = delete_attachment.media_id;
-
-        WHEN 'Personal'::en_chat_type THEN
-            DELETE FROM private.personal_messages_attachments pma
-            WHERE pma.chat_id = delete_attachment.chat_id
-              AND pma.message_id = delete_attachment.media_id;
-
-        WHEN 'Bot'::en_chat_type THEN
-            DELETE FROM private.bot_messages_attachments bma
-            WHERE bma.chat_id = delete_attachment.chat_id
-              AND bma.message_id = delete_attachment.media_id;
-
-        ELSE RAISE DATATYPE_MISMATCH;
-    END CASE;
-    
-    UPDATE private.media m
-    SET links_count = links_count - 1
-    WHERE m.media_id = delete_attachment.media_id;
-
-    GET DIAGNOSTICS affected_rows = ROW_COUNT;
-    RETURN affected_rows;
-END;
-$$
-LANGUAGE plpgsql;
