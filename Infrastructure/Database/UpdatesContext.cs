@@ -11,7 +11,7 @@ namespace Infrastructure.Database
         public IMongoCollection<DeletedMessage> DeletedMessages { get; }
         public IMongoCollection<DeletedAttachment> DeletedAttachments { get; }
         public IMongoCollection<NewMedia> NewMedia { get; }
-        public IMongoCollection<MessageUpdate> MessageUpdates { get; }
+        public IMongoCollection<PublicMessageUpdate> MessageUpdates { get; }
 
         public UpdatesContext(IMongoClient client, IConfiguration configuration)
         {
@@ -25,7 +25,7 @@ namespace Infrastructure.Database
             DeletedMessages = Database.GetCollection<DeletedMessage>("deleted_messages");
             DeletedAttachments = Database.GetCollection<DeletedAttachment>("deleted_attachments");
             NewMedia = Database.GetCollection<NewMedia>("new_media");
-            MessageUpdates = Database.GetCollection<MessageUpdate>("message_updates");
+            MessageUpdates = Database.GetCollection<PublicMessageUpdate>("message_updates");
         }
 
         public async Task InitializeAsync()
@@ -58,8 +58,8 @@ namespace Infrastructure.Database
                 ));
 
             await MessageUpdates.Indexes.CreateOneAsync(
-                new CreateIndexModel<MessageUpdate>(
-                    Builders<MessageUpdate>.IndexKeys
+                new CreateIndexModel<PublicMessageUpdate>(
+                    Builders<PublicMessageUpdate>.IndexKeys
                         .Descending(x => x.UpdatedAt)
                 ));
         }

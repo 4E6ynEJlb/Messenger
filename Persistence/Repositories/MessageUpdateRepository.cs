@@ -7,20 +7,20 @@ namespace Persistence.Repositories
 {
     public class MessageUpdateRepository : IMessageUpdateStore
     {
-        private readonly IMongoCollection<MessageUpdate> _collection;
+        private readonly IMongoCollection<PublicMessageUpdate> _collection;
 
         public MessageUpdateRepository(UpdatesContext context)
         {
             _collection = context.MessageUpdates;
         }
 
-        public async Task<MessageUpdate?> GetOneEldestAsync(CancellationToken cancellationToken)
+        public async Task<PublicMessageUpdate?> GetOneEldestAsync(CancellationToken cancellationToken)
         {
-            return await _collection.Find(FilterDefinition<MessageUpdate>.Empty)
+            return await _collection.Find(FilterDefinition<PublicMessageUpdate>.Empty)
                 .SortBy(x => x.UpdatedAt).FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<bool> CreateAsync(MessageUpdate messageUpdate, CancellationToken cancellationToken)
+        public async Task<bool> CreateAsync(PublicMessageUpdate messageUpdate, CancellationToken cancellationToken)
         {
             try
             {

@@ -55,19 +55,20 @@ namespace Persistence.Repositories
         }
 
         public async Task DeleteFileFromPublicMessageAsync(Guid chatId, Guid attachmentId, Guid deletingBy,
-            CancellationToken cancellationToken)
+            DateTime deletedAt, CancellationToken cancellationToken)
         {
             try
             {
                 await using var lease = await _connectionScope.LeaseConnectionAsync(cancellationToken)
                     .ConfigureAwait(false);
                 const string sql =
-                    "SELECT private.delete_file_from_public_message(@chat_id, @attachment_id, @deleting_by)";
+                    "SELECT private.delete_file_from_public_message(@chat_id, @attachment_id, @deleting_by, @deleted_at)";
                 var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_id = chatId,
                     attachment_id = attachmentId,
-                    deleting_by = deletingBy
+                    deleting_by = deletingBy,
+                    deleted_at = deletedAt,
                 }, cancellationToken, lease.Transaction)).ConfigureAwait(false);
                 if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
@@ -78,15 +79,20 @@ namespace Persistence.Repositories
         }
 
         public async Task DeletePublicMessageAsync(Guid chatId, Guid messageId, Guid deletingBy,
-            CancellationToken cancellationToken)
+            DateTime deletedAt, CancellationToken cancellationToken)
         {
             try
             {
                 await using var lease = await _connectionScope.LeaseConnectionAsync(cancellationToken)
                     .ConfigureAwait(false);
-                const string sql = "SELECT private.delete_public_message(@chat_id, @message_id, @deleting_by)";
-                var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
-                    new { chat_id = chatId, message_id = messageId, deleting_by = deletingBy },
+                const string sql = "SELECT private.delete_public_message(@chat_id, @message_id, @deleting_by, @deleted_at)";
+                var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new 
+                { 
+                    chat_id = chatId, 
+                    message_id = messageId, 
+                    deleting_by = deletingBy, 
+                    deleted_at = deletedAt 
+                },
                     cancellationToken, lease.Transaction)).ConfigureAwait(false);
                 if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
@@ -146,6 +152,28 @@ namespace Persistence.Repositories
                     new_message_text = newMessageText,
                     updated_at = DateTime.SpecifyKind(updatedAt, DateTimeKind.Unspecified)
                 }, cancellationToken, lease.Transaction)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
+        public async Task LogPublicMessageUpdateAsync(Guid chatId, Guid updatedBy, DateTime updatedAt, 
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var lease = await _connectionScope.LeaseConnectionAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                const string sql = "SELECT private.log_public_message_update(@chat_id, @updated_by, @updated_at)";
+                var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    updated_by = updatedBy,
+                    updated_at = DateTime.SpecifyKind(updatedAt, DateTimeKind.Unspecified)
+                }, cancellationToken, lease.Transaction)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
