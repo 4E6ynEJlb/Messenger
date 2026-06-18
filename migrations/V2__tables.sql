@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS private.users
     birth_date date NOT NULL,
     was_online timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     bio varchar(512),
-    FOREIGN KEY (avatar) REFERENCES private.media(media_id)
+    FOREIGN KEY (avatar) REFERENCES private.media(media_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS private.personal_chats_members
     user_id uuid,
     was_in_chat timestamp NOT NULL default CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES private.personal_chats(chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (chat_id, user_id)
 );
 
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS private.personal_messages_attachments
     attachment_id uuid NOT NULL,
     message_id uuid NOT NULL,
     chat_id uuid NOT NULL,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE INDEX IF NOT EXISTS personal_messages_attachments_message_id_hash_idx ON private.personal_messages_attachments USING HASH(message_id);
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS private.public_messages_attachments
     attachment_id uuid,
     message_id uuid,
     chat_id uuid,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE INDEX IF NOT EXISTS public_messages_attachments_message_id_hash_idx ON private.public_messages_attachments USING hash(message_id);
@@ -342,7 +342,7 @@ CREATE TABLE IF NOT EXISTS private.bot_chats
     is_enabled bool NOT NULL DEFAULT false,
     UNIQUE (bot_id, user_id),
     FOREIGN KEY (bot_id) REFERENCES private.bots(bot_id) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS private.bot_messages
@@ -369,7 +369,7 @@ CREATE TABLE IF NOT EXISTS private.bot_messages_attachments
     attachment_id uuid,
     message_id uuid,
     chat_id uuid,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE TABLE IF NOT EXISTS private.bot_chats_active_buttons
@@ -389,7 +389,7 @@ CREATE TABLE IF NOT EXISTS private.users_refresh_tokens
     device_id uuid NOT NULL UNIQUE,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     lifetime interval NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES private.users(user_id)
+    FOREIGN KEY (user_id) REFERENCES private.users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS users_refresh_tokens_expiration_btree_idx ON private.users_refresh_tokens((created_at + lifetime));

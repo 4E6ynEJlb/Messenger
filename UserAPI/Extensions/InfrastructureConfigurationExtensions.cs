@@ -6,6 +6,7 @@ using Infrastructure.Storage;
 using MassTransit;
 using Minio;
 using Minio.AspNetCore;
+using MongoDB.Driver;
 using Npgsql;
 using Serilog;
 using Serilog.Events;
@@ -16,7 +17,7 @@ namespace UserAPI.Extensions
 {
     public static class InfrastructureConfigurationExtensions
     {
-        public static void ConfigureDatabaseConnectionFactory(this WebApplicationBuilder builder)
+        public static void ConfigureDatabases(this WebApplicationBuilder builder)
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
             builder.Services.AddSingleton(sp =>
@@ -33,6 +34,18 @@ namespace UserAPI.Extensions
             });
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
+
+            builder.Services.AddSingleton<IMongoClient>(_ =>
+            {
+                var connection =
+                    builder.Configuration["Mongo:ConnectionString"]
+                    ?? throw new ArgumentNullException("Mongo connection");
+
+                return new MongoClient(connection);
+            });
+
+
+            builder.Services.AddSingleton<UpdatesContext>();
         }
 
         public static void ConfigureMinioStorage(this WebApplicationBuilder builder)

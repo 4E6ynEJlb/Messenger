@@ -1,4 +1,15 @@
 services:
+  maintenance:
+    image: ${DOCKER_REGISTRY-}maintenance
+    build:
+      context: .
+      dockerfile: Maintenance/Dockerfile
+    depends_on:
+      - npgsql-container
+      - mongodb
+      - flyway
+      - loki
+
   userapi-1:
     image: ${DOCKER_REGISTRY-}userapi
     build:
@@ -6,6 +17,7 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
       - mediaapi
       - redis-1
@@ -21,6 +33,7 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
       - mediaapi
       - redis-1
@@ -36,6 +49,7 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
       - mediaapi
       - redis-1
@@ -69,6 +83,22 @@ services:
       retries: 10
     volumes:
       - db-data:/var/lib/postgresql
+
+  mongodb:
+    image: mongo:8
+    container_name: messenger-mongodb
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: messenger_updates
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongodb_data:/data/db
 
 
   minio:
@@ -190,11 +220,23 @@ services:
       - userapi-2
       - userapi-3
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "http"
+      - "nginx:80"
+      - "--domain=fetch-estranged-pointer.ngrok-free.dev"
+    environment:
+      NGROK_AUTHTOKEN: -----------------------------------
+    depends_on:
+      - nginx
 
 
 volumes:
   miniodata:
   db-data:
+  mongodb_data:
   kafka-data:
   grafana: ~
   loki: ~

@@ -1,6 +1,8 @@
 ﻿using Application.Models.Output;
 using Dapper;
+using Domain.Models.Documents;
 using Domain.Models.Types;
+using Domain.Stores.MongoDB;
 using Infrastructure.Database;
 using Infrastructure.Storage;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +14,12 @@ namespace MaintenanceAPI.Controllers
     {
         private readonly IDbConnectionFactory _connectionFactory;
         private readonly IObjectStorage _objectStorage;
-        public MediaController(IDbConnectionFactory dbConnectionFactory, IObjectStorage objectStorage)
+        private readonly INewMediaStore _newMediaStore;
+        public MediaController(IDbConnectionFactory dbConnectionFactory, IObjectStorage objectStorage, INewMediaStore newMediaStore)
         {
             _connectionFactory = dbConnectionFactory;
             _objectStorage = objectStorage;
+            _newMediaStore = newMediaStore;
         }
 
         [ProducesResponseType(typeof(FileResult), 200)]
@@ -32,11 +36,19 @@ namespace MaintenanceAPI.Controllers
                 WHERE media_id = @media_id
                 LIMIT 1
                 """;
-            var file = await conn.ExecuteScalarAsync<MediaFile>(Cmd(sql,
+            MediaFile? file = await conn.ExecuteScalarAsync<MediaFile>(Cmd(sql,
                 new { media_id = id }, cancellationToken));
             if (file is null)
             {
-                return NotFound();
+                NewMedia? newFile = await _newMediaStore.GetOneByIdAsync(id, cancellationToken);
+                if (newFile is null)
+                    return NotFound();
+                file = new MediaFile
+                {
+                    MediaId = newFile.MediaId,
+                    FileName = newFile.FileName,
+                    ContentType = newFile.ContentType
+                };
             }
             var stream = await _objectStorage.GetAsync(id, cancellationToken);
 
@@ -65,7 +77,15 @@ namespace MaintenanceAPI.Controllers
                 new { media_id = id }, cancellationToken));
             if (file is null)
             {
-                return NotFound();
+                NewMedia? newFile = await _newMediaStore.GetOneByIdAsync(id, cancellationToken);
+                if (newFile is null)
+                    return NotFound();
+                file = new MediaFile
+                {
+                    MediaId = newFile.MediaId,
+                    FileName = newFile.FileName,
+                    ContentType = newFile.ContentType
+                };
             }
             MediaInfo mediaInfo = new()
             {

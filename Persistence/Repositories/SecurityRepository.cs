@@ -3,7 +3,6 @@ using Domain.Models.Types;
 using Domain.Stores;
 using Infrastructure.Database;
 using Npgsql;
-using Persistence;
 
 namespace Persistence.Repositories
 {

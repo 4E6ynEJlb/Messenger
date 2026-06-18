@@ -20,10 +20,15 @@ namespace Infrastructure.Storage
 
         public async Task<MemoryStream> GetAsync(Guid name, CancellationToken cancellationToken)
         {
-            StatObjectArgs statObjectArgs = new StatObjectArgs().WithBucket(_bucketName).WithObject(name.ToString());
+            StatObjectArgs statObjectArgs = new StatObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(name.ToString());
             var statArgs = await _client.StatObjectAsync(statObjectArgs);
             MemoryStream stream = new MemoryStream(Convert.ToInt32(statArgs.Size));
-            GetObjectArgs args = new GetObjectArgs().WithBucket(_bucketName).WithObject(name.ToString()).WithCallbackStream(str =>
+            GetObjectArgs args = new GetObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(name.ToString())
+                .WithCallbackStream(str =>
             {
                 str.CopyTo(stream);
             });
@@ -42,14 +47,28 @@ namespace Infrastructure.Storage
 
         public async Task SaveAsync(Stream stream, Guid name, CancellationToken cancellationToken)
         {
-            PutObjectArgs args = new PutObjectArgs().WithBucket(_bucketName).WithObject(name.ToString()).WithStreamData(stream).WithObjectSize(stream.Length).WithContentType("application/octet-stream");
+            PutObjectArgs args = new PutObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(name.ToString())
+                .WithStreamData(stream)
+                .WithObjectSize(stream.Length)
+                .WithContentType("application/octet-stream");
             await _client.PutObjectAsync(args, cancellationToken);
         }
 
         public async Task DeleteAsync(Guid name, CancellationToken cancellationToken)
         {
-            RemoveObjectArgs args = new RemoveObjectArgs().WithBucket(_bucketName).WithObject(name.ToString());
+            RemoveObjectArgs args = new RemoveObjectArgs()
+                .WithBucket(_bucketName)
+                .WithObject(name.ToString());
             await _client.RemoveObjectAsync(args, cancellationToken);
+        }
+
+        public async Task DeleteManyAsync(IEnumerable<Guid> names, CancellationToken cancellationToken)
+        {
+            await _client.RemoveObjectsAsync(new RemoveObjectsArgs()
+                .WithBucket(_bucketName)
+                .WithObjects(names.Select(n => n.ToString()).ToList()), cancellationToken);
         }
 
         private async void CreateBucketAsync()

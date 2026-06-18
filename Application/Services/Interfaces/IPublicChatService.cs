@@ -26,7 +26,7 @@ namespace Application.Services.Interfaces
         public Task BanUserAsync(Guid userId, Guid chatId, Guid bannedUserId, CancellationToken cancellationToken);
         public Task UnbanUserAsync(Guid userId, Guid chatId, Guid unbannedUserId, CancellationToken cancellationToken);
         public Task DeleteMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken);
-        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken);
+        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken);
         public Task LeaveChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
         public Task RemoveMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken);
         public Task RemoveAndBanChatMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken);

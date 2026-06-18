@@ -28,7 +28,7 @@ namespace UserAPI
 
             builder.ConfigureOptions();
             builder.ConfigureLogging();
-            builder.ConfigureDatabaseConnectionFactory();
+            builder.ConfigureDatabases();
             builder.ConfigureMinioStorage();
             builder.ConfigureRedis();
             builder.ConfigureBus();
