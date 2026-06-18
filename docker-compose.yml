@@ -1,14 +1,14 @@
 services:
-  maintenance:
-    image: ${DOCKER_REGISTRY-}maintenance
-    build:
-      context: .
-      dockerfile: Maintenance/Dockerfile
-    depends_on:
-      - npgsql-container
-      - mongodb
-      - flyway
-      - loki
+  # maintenance:
+  #   image: ${DOCKER_REGISTRY-}maintenance
+  #   build:
+  #     context: .
+  #     dockerfile: Maintenance/Dockerfile
+  #   depends_on:
+  #     - npgsql-container
+  #     - mongodb
+  #     - flyway
+  #     - loki
 
   userapi-1:
     image: ${DOCKER_REGISTRY-}userapi
@@ -43,6 +43,22 @@ services:
       - prometheus
       - grafana
   userapi-3:
+    image: ${DOCKER_REGISTRY-}userapi
+    build:
+      context: .
+      dockerfile: UserAPI/Dockerfile
+    depends_on:
+      - npgsql-container
+      - mongodb
+      - flyway
+      - mediaapi
+      - redis-1
+      - redis-2
+      - kafka
+      - loki
+      - prometheus
+      - grafana
+  userapi-4:
     image: ${DOCKER_REGISTRY-}userapi
     build:
       context: .

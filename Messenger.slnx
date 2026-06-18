@@ -4,6 +4,7 @@
     <File Path="migrations/V2__tables.sql" />
     <File Path="migrations/V3__maintenance_and_user_functions.sql" />
     <File Path="migrations/V4__remake_user_messages_functions.sql" />
+    <File Path="migrations/V5__media_api_function.sql" />
   </Folder>
   <Folder Name="/nginx/">
     <File Path="nginx/nginx.conf" />
