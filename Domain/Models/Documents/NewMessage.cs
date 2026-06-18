@@ -7,7 +7,7 @@ namespace Domain.Models.Documents
     public record NewMessage
     {
         [BsonId]
-        public Guid MessageId { get; init; }
+        public required Guid MessageId { get; init; }
 
         [BsonElement("chatId")]
         public required Guid ChatId { get; init; }

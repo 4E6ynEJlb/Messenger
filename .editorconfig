@@ -2,3 +2,6 @@
 
 # CS1591: Отсутствует комментарий XML для открытого видимого типа или члена
 dotnet_diagnostic.CS1591.severity = none
+
+# CA2200: Повторно порождайте исключения для сохранения сведений стека
+dotnet_diagnostic.CA2200.severity = none

@@ -1,12 +1,13 @@
 ﻿using Application.Models.Input;
 using Application.Models.Internal;
+using Application.Models.Internal.Constants;
 using Application.Models.Internal.Messages;
 using Application.Models.Internal.Options;
 using Application.Models.OptionsAndHelpers;
 using Application.Models.Output;
 using Application.Services.Interfaces;
 using Domain.Stores;
-using Infrastructure.Storage;
+using Domain.Stores.MongoDB;
 using Microsoft.Extensions.Options;
 
 namespace Application.Services.Implementations
@@ -16,16 +17,19 @@ namespace Application.Services.Implementations
         private readonly string _mediaPrefix;
         private readonly IPersonalChatStore _personalChatStore;
         private readonly IMessagePublisher _messagePublisher;
-        private readonly IObjectStorage _objectStorage;
         private readonly IMessageCacheService _messageCacheService;
+        private readonly IMessagesService _messagesService;
+        private readonly IDeletedChatStore _deletedChatStore;
         public PersonalChatService(
             IPersonalChatStore personalChatStore, IMessagePublisher messagePublisher, 
-            IObjectStorage objectStorage, IMessageCacheService messageCacheService, IOptions<ApplicationServicesOptions> options) 
+            IMessageCacheService messageCacheService, IMessagesService messagesService, 
+            IDeletedChatStore deletedChatStore, IOptions<ApplicationServicesOptions> options) 
         { 
             _personalChatStore = personalChatStore;
             _messagePublisher = messagePublisher;
-            _objectStorage = objectStorage;
             _messageCacheService = messageCacheService;
+            _messagesService = messagesService;
+            _deletedChatStore = deletedChatStore;
             _mediaPrefix = options.Value.MediaPrefix;
         }
 
@@ -36,64 +40,115 @@ namespace Application.Services.Implementations
 
         public async Task DeleteChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken)
         {
-            await _personalChatStore.DeleteChatAsync(chatId, userId, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new ChatDeletedMessage() 
-                { 
-                    ChatId = chatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, cancellationToken)]
-                }, 
-                cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _deletedChatStore.SaveAsync(chatId, ChatTypeConverter.Convert(ChatType.Personal), cancellationToken);
+                await _personalChatStore.DeleteChatAsync(chatId, userId, cancellationToken);
+                completed = true;
+            }
+            catch (Exception ex) when (!completed)
+            {
+                await _deletedChatStore.DeleteAsync(chatId, ChatTypeConverter.Convert(ChatType.Personal), CancellationToken.None);
+                throw ex;
+            }
+            finally
+            {
+                if (completed)
+                await _messagePublisher.PublishAsync(
+                        new ChatDeletedMessage()
+                        {
+                            ChatId = chatId,
+                            ChatType = ChatType.Personal,
+                            UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, cancellationToken)]
+                        },
+                        CancellationToken.None);
+            }
         }
 
-        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken)
+        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken)
         {
             if (!Guid.TryParse(mediaLink[(_mediaPrefix.Length + 1)..], out Guid mediaId))
                 throw new DataValidationException("mediaLink");
-            Guid messageId = await _personalChatStore.GetMessageIdByMediaAsync(chatId, mediaId, cancellationToken);
-            await _personalChatStore.DeleteFileFromMessageAsync(chatId, mediaId, userId, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new FileDeletedMessage() 
-                { 
-                    ChatId = chatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, cancellationToken)],
-                    File = $"{_mediaPrefix}{mediaId}",
-                    MessageId = messageId
-                }, 
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(messageId, chatId, cancellationToken);
+            
+            bool completed = false;
+            try
+            {
+                await _messagesService.DeleteAttachmentAsync(userId, chatId, ChatType.Personal, messageId, mediaId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                {
+                    await _messagePublisher.PublishAsync(
+                    new FileDeletedMessage()
+                    {
+                        ChatId = chatId,
+                        ChatType = ChatType.Personal,
+                        UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, CancellationToken.None)],
+                        File = $"{_mediaPrefix}{mediaId}",
+                        MessageId = messageId
+                    },
+                    cancellationToken);
+
+                    await _messageCacheService.InvalidateAsync(messageId, chatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task DeleteMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
-            await _personalChatStore.DeleteMessageAsync(chatId, messageId, userId, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessageDeletedMessage() 
-                { 
-                    ChatId = chatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, cancellationToken)],
-                    MessageId = messageId
-                }, 
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(messageId, chatId, cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _messagesService.DeleteMessageAsync(userId, ChatType.Personal, chatId, messageId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                {
+                    await _messagePublisher.PublishAsync(
+                    new MessageDeletedMessage()
+                    {
+                        ChatId = chatId,
+                        ChatType = ChatType.Personal,
+                        UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, CancellationToken.None)],
+                        MessageId = messageId
+                    },
+                    cancellationToken);
+
+                    await _messageCacheService.InvalidateAsync(messageId, chatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task EditMessageTextAsync(Guid userId, UpdatingMessage updatingMessage, CancellationToken cancellationToken)
         {
-            await _personalChatStore.UpdateMessageTextAsync(updatingMessage.ChatId, updatingMessage.MessageId, userId, updatingMessage.MessageText, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessageUpdatedMessage() 
-                { 
-                    ChatId = updatingMessage.ChatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(updatingMessage.ChatId, userId, cancellationToken)],
-                    MessageId = updatingMessage.MessageId
-                }, 
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(updatingMessage.MessageId, updatingMessage.ChatId, cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _messagesService.UpdateMessageTextAsync(userId, ChatType.Personal, updatingMessage, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                {
+                    await _messagePublisher.PublishAsync(
+                    new MessageUpdatedMessage()
+                    {
+                        ChatId = updatingMessage.ChatId,
+                        ChatType = ChatType.Personal,
+                        UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(updatingMessage.ChatId, userId, CancellationToken.None)],
+                        MessageId = updatingMessage.MessageId
+                    },
+                    cancellationToken);
+
+                    await _messageCacheService.InvalidateAsync(updatingMessage.MessageId, updatingMessage.ChatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task<ChatShortInfo> GetChatShortInfoAsync(Guid userId, Guid chatId, CancellationToken cancellationToken)
@@ -107,8 +162,7 @@ namespace Application.Services.Implementations
             Message? message = await _messageCacheService.GetAsync(messageId, chatId, cancellationToken);
             if (message is null)
             {
-                Domain.Models.Types.Message messageData = await _personalChatStore.GetMessageAsync(chatId, messageId, userId, cancellationToken);
-                message = new Message(messageData, _mediaPrefix, chatId);
+                message = await _messagesService.GetMessageByIdAsync(userId, ChatType.Personal, chatId, messageId, cancellationToken);
                 await _messageCacheService.SaveAsync(message, cancellationToken);
             }
             return message;
@@ -116,8 +170,7 @@ namespace Application.Services.Implementations
 
         public async Task<Message[]> GetMessagesAsync(Guid userId, Guid chatId, MessagesSelectOptions options, CancellationToken cancellationToken)
         {
-            Domain.Models.Types.Message[] messages = await _personalChatStore.GetMessagesAsync(chatId, userId, options.MessagesCount, options.SentBefore ?? DateTime.UtcNow, cancellationToken);
-            return messages.Select(m => new Message(m, _mediaPrefix, chatId)).ToArray();
+            return await _messagesService.GetMessagesAsync(userId, ChatType.Personal, chatId, options, cancellationToken);
         }
 
         public async Task<Guid> GetUserIdByChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken)
@@ -131,7 +184,7 @@ namespace Application.Services.Implementations
                 new UserIsTypingMessage() 
                 { 
                     ChatId = chatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,                    
+                    ChatType = ChatType.Personal,                    
                     TypingUserId = userId,
                     DestinationUserId = [await _personalChatStore.GetUserIdByChatIdAsync(chatId, userId, cancellationToken)]
                 }, 
@@ -145,49 +198,52 @@ namespace Application.Services.Implementations
 
         public async Task<Guid[]> ResendMessagesAsync(Guid userId, ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken)
         {
-            Guid[] ids = await _personalChatStore.ResendMessagesAsync(resendMessagesModel.ChatId, userId, ChatTypeConverter.Convert(resendMessagesModel.SourceChatType), resendMessagesModel.SourceChatId, resendMessagesModel.Messages, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessagesSentMessage() 
-                { 
-                    ChatId = resendMessagesModel.ChatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(resendMessagesModel.ChatId, userId, cancellationToken)],
-                    MessagesId = ids,
-                }, 
-                cancellationToken);
+            bool completed = false;
+            Guid[] ids = Array.Empty<Guid>();
+            try
+            {
+                ids = await _messagesService.ResendMessagesAsync(userId, ChatType.Personal, resendMessagesModel, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                    await _messagePublisher.PublishAsync(
+                        new MessagesSentMessage()
+                        {
+                            ChatId = resendMessagesModel.ChatId,
+                            ChatType = ChatType.Personal,
+                            UserId = [userId, await _personalChatStore.GetUserIdByChatIdAsync(resendMessagesModel.ChatId, userId, CancellationToken.None)],
+                            MessagesId = ids,
+                        },
+                        CancellationToken.None);
+            }
             return ids;
         }
 
         public async Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken)
         {
-            Domain.Models.Types.MediaFile[]? attachments = null;
-            if (sendingMessage.Attachments != null && sendingMessage.Attachments.Length > 0)
+            bool completed = false;
+            Guid id = Guid.Empty;
+
+            try
             {
-                var list = new List<Domain.Models.Types.MediaFile>(sendingMessage.Attachments.Length);
-                foreach (var a in sendingMessage.Attachments)
-                {
-                    var mediaId = Guid.NewGuid();
-                    await _objectStorage.SaveAsync(a.Content, mediaId, cancellationToken);
-                    list.Add(a.ToMediaFile(mediaId));
-                }
-                attachments = list.ToArray();
+                id = await _messagesService.SendUserMessageAsync(ChatType.Personal, sendingMessage, cancellationToken);
+                completed = true;
             }
-
-            Guid id = await _personalChatStore.SendMessageAsync(
-                sendingMessage.ChatId, sendingMessage.Author,
-                sendingMessage.ReplyTo, sendingMessage.MessageText,
-                attachments, cancellationToken);
-
-            await _messagePublisher.PublishAsync(
-                new MessagesSentMessage()
-                {
-                    ChatId = sendingMessage.ChatId,
-                    ChatType = Models.Internal.Constants.ChatType.Personal,
-                    UserId = [sendingMessage.Author, await _personalChatStore.GetUserIdByChatIdAsync(sendingMessage.ChatId, sendingMessage.Author, cancellationToken)],
-                    MessagesId = [id]
-                },
-                cancellationToken);
-
+            finally
+            {
+                if (completed)
+                    await _messagePublisher.PublishAsync(
+                        new MessagesSentMessage()
+                        {
+                            ChatId = sendingMessage.ChatId,
+                            ChatType = ChatType.Personal,
+                            UserId = [sendingMessage.Author, await _personalChatStore.GetUserIdByChatIdAsync(sendingMessage.ChatId, sendingMessage.Author, CancellationToken.None)],
+                            MessagesId = [id]
+                        },
+                        CancellationToken.None);
+            }
             return id;
         }
 

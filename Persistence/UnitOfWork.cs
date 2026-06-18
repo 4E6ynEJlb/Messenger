@@ -9,15 +9,18 @@ namespace Persistence
         public UnitOfWork(
             UnitOfWorkConnectionScope connectionScope,
             ISynchronizationStore synchronization,
-            IMaintenanceStore maintenance)
+            IMaintenanceStore maintenance,
+            IGenericChatStore genericChat)
         {
             _connectionScope = connectionScope;
             Synchronization = synchronization;
             Maintenance = maintenance;
+            GenericChat = genericChat;
         }
 
         public ISynchronizationStore Synchronization { get; }
         public IMaintenanceStore Maintenance { get; }
+        public IGenericChatStore GenericChat { get; }
 
         public Task BeginTransactionAsync(CancellationToken cancellationToken = default) =>
             _connectionScope.BeginTransactionAsync(cancellationToken);

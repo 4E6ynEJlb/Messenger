@@ -368,14 +368,22 @@ LANGUAGE plpgsql;
 
 DROP FUNCTION IF EXISTS sch_user.delete_file_from_public_message(chat_id uuid, attachment_id uuid, deleting_by uuid);
 DROP FUNCTION IF EXISTS sch_user.delete_public_message(chat_id uuid, message_id uuid, deleting_by uuid);
-ALTER FUNCTION sch_user.delete_file_from_personal_message(chat_id uuid, attachment_id uuid, deleting_by uuid)
-SET SCHEMA private;
-ALTER FUNCTION sch_user.delete_personal_message(chat_id uuid, message_id uuid, deleting_by uuid)
-SET SCHEMA private;
+DROP FUNCTION IF EXISTS sch_user.delete_file_from_personal_message(chat_id uuid, attachment_id uuid, deleting_by uuid);
+DROP FUNCTION IF EXISTS sch_user.delete_personal_message(chat_id uuid, message_id uuid, deleting_by uuid);
 
 DO
 $$
 BEGIN
+    IF NOT exists(SELECT 1 FROM pg_type WHERE typname = 'attachment_input') THEN
+        CREATE TYPE attachment_input AS
+        (
+            links_count int,
+            media_id uuid,
+            file_name varchar(260),
+            content_type varchar(24)
+        );
+    END IF;
+
     IF NOT exists(SELECT 1 FROM pg_type WHERE typname = 'message_input') THEN
         CREATE TYPE message_input AS
         (
@@ -389,7 +397,7 @@ BEGIN
             reply_to uuid,
             resent_from uuid,
             is_bot_resend bool,
-            attached_media media_file[]
+            attached_media attachment_input[]
         );
     END IF;
 END;
@@ -402,7 +410,7 @@ AS
 $$
 DECLARE
     affected_rows int;
-    attachment media_file;
+    attachment attachment_input;
 BEGIN
     CASE chat_type
         WHEN 'Public'::en_chat_type THEN
@@ -418,12 +426,8 @@ BEGIN
                             FROM private.media
                             WHERE media_id = attachment.media_id
                         ) THEN
-                            INSERT INTO private.media (media_id, file_name, content_type)
-                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type);
-                        ELSE
-                            UPDATE private.media
-                            SET links_count = links_count + 1
-                            WHERE media_id = attachment.media_id;
+                            INSERT INTO private.media (media_id, file_name, content_type, links_count)
+                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type, attachment.links_count);
                         end if;
 
                         INSERT INTO private.public_messages_attachments (attachment_id, message_id, chat_id)
@@ -445,12 +449,8 @@ BEGIN
                             FROM private.media
                             WHERE media_id = attachment.media_id
                         ) THEN
-                            INSERT INTO private.media (media_id, file_name, content_type)
-                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type);
-                        ELSE
-                            UPDATE private.media
-                            SET links_count = links_count + 1
-                            WHERE media_id = attachment.media_id;
+                            INSERT INTO private.media (media_id, file_name, content_type, links_count)
+                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type, attachment.links_count);
                         end if;
 
                         INSERT INTO private.personal_messages_attachments (attachment_id, message_id, chat_id)
@@ -472,12 +472,8 @@ BEGIN
                             FROM private.media
                             WHERE media_id = attachment.media_id
                         ) THEN
-                            INSERT INTO private.media (media_id, file_name, content_type)
-                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type);
-                        ELSE
-                            UPDATE private.media
-                            SET links_count = links_count + 1
-                            WHERE media_id = attachment.media_id;
+                            INSERT INTO private.media (media_id, file_name, content_type, links_count)
+                            VALUES (attachment.media_id, attachment.file_name, attachment.content_type, attachment.links_count);
                         end if;
 
                         INSERT INTO private.bot_messages_attachments (attachment_id, message_id, chat_id)
@@ -540,68 +536,24 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION private.delete_file_from_public_message(chat_id uuid, attachment_id uuid, deleting_by uuid, deleted_at timestamp)
+CREATE OR REPLACE FUNCTION private.delete_file_from_public_message(chat_id uuid, message_id uuid, attachment_id uuid, deleting_by uuid, deleted_at timestamp)
 RETURNS int
 SECURITY DEFINER
-SET search_path = sch_user, public, private
 AS
 $$
 DECLARE
     affected_rows int;
     message_with_attachment private.public_messages;
 BEGIN
-    IF exists(
-        SELECT 1
-        FROM private.public_chats_banned_users pcbu
-        WHERE pcbu.chat_id = delete_file_from_public_message.chat_id
-          AND pcbu.user_id = deleting_by
-    ) THEN
-        RAISE EXCEPTION 'User is banned in chat'
-            USING ERRCODE = '42501';
-    END IF;
-
-    SELECT private.public_messages.* INTO message_with_attachment
+    SELECT * INTO message_with_attachment
     FROM private.public_messages
-    JOIN private.public_messages_attachments
-        ON private.public_messages.chat_id = private.public_messages_attachments.chat_id
-       AND private.public_messages.message_id = private.public_messages_attachments.message_id
     WHERE private.public_messages.chat_id = delete_file_from_public_message.chat_id
-      AND private.public_messages_attachments.attachment_id = delete_file_from_public_message.attachment_id;
-
-    IF message_with_attachment.author != delete_file_from_public_message.deleting_by AND
-       (SELECT coalesce(role :: text, 'Not a member')
-        FROM private.public_chats_members
-        WHERE public_chats_members.chat_id = delete_file_from_public_message.chat_id
-          AND public_chats_members.user_id = delete_file_from_public_message.deleting_by) NOT IN ('Creator', 'Administrator') THEN
-        RAISE EXCEPTION 'You cannot delete this public message.' USING ERRCODE = '42501';
-    END IF;
-
-    IF exists(
-        SELECT 1
-        FROM public_chats_members pcm
-        WHERE user_id = deleting_by
-        AND pcm.chat_id = delete_file_from_public_message.chat_id
-        AND role = 'Reader'
-    ) THEN
-        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
-    END IF;
-
-    PERFORM private.update_user_online_status(deleting_by);
-
-    IF exists(
-        SELECT 1
-        FROM private.public_messages
-        JOIN private.public_messages_attachments ON public_messages.message_id = public_messages_attachments.message_id
-        WHERE public_messages.chat_id = delete_file_from_public_message.chat_id
-          AND public_messages_attachments.attachment_id = delete_file_from_public_message.attachment_id
-          AND resent_from IS NOT NULL
-        ) THEN
-        RAISE EXCEPTION 'Attachments cannot be removed from forwarded public messages.' USING ERRCODE = '42501';
-    END IF;
+      AND private.public_messages.message_id = delete_file_from_public_message.message_id;
 
     WITH deleted AS (
     DELETE FROM private.public_messages_attachments
     WHERE public_messages_attachments.chat_id = delete_file_from_public_message.chat_id
+      AND public_messages_attachments.message_id = delete_file_from_public_message.message_id
       AND public_messages_attachments.attachment_id = delete_file_from_public_message.attachment_id
     RETURNING attachment_id)
 
@@ -627,47 +579,16 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION private.delete_public_message(chat_id uuid, message_id uuid, deleting_by uuid, deleted_at timestamp)
 RETURNS int
 SECURITY DEFINER
-SET search_path = sch_user, public, private
 AS
 $$
 DECLARE
     affected_rows int;
     deleting_message private.public_messages;
 BEGIN
-    IF exists(
-        SELECT 1
-        FROM private.public_chats_banned_users pcbu
-        WHERE pcbu.chat_id = delete_public_message.chat_id
-          AND pcbu.user_id = deleting_by
-    ) THEN
-        RAISE EXCEPTION 'User is banned in chat'
-            USING ERRCODE = '42501';
-    END IF;
-
     SELECT * INTO deleting_message
     FROM private.public_messages
     WHERE private.public_messages.chat_id = delete_public_message.chat_id
       AND private.public_messages.message_id = delete_public_message.message_id;
-
-    IF deleting_message.author != delete_public_message.deleting_by AND
-       (SELECT coalesce(role::text, '')
-        FROM private.public_chats_members
-        WHERE public_chats_members.chat_id = delete_public_message.chat_id
-          AND public_chats_members.user_id = delete_public_message.deleting_by) NOT IN ('Creator', 'Administrator') THEN
-        RAISE EXCEPTION 'You cannot delete this public message.' USING ERRCODE = '42501';
-    END IF;
-
-    IF exists(
-        SELECT 1
-        FROM private.public_chats_members pcm
-        WHERE pcm.user_id = delete_public_message.deleting_by
-        AND pcm.chat_id = delete_public_message.chat_id
-        AND pcm.role = 'Reader'
-    ) THEN
-        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
-    END IF;
-
-    PERFORM private.update_user_online_status(deleting_by);
 
     DELETE FROM private.public_messages
     WHERE public_messages.chat_id = delete_public_message.chat_id
@@ -688,7 +609,6 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION private.log_public_message_update(chat_id uuid, updated_by uuid, updated_at timestamp)
 RETURNS int
 SECURITY DEFINER
-SET search_path = sch_user, public, private
 AS
 $$
 DECLARE
@@ -700,5 +620,117 @@ BEGIN
     GET DIAGNOSTICS affected_rows = ROW_COUNT;
     RETURN affected_rows;
 END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION private.delete_personal_message(chat_id uuid, message_id uuid, deleting_by uuid)
+RETURNS int
+SECURITY DEFINER
+AS
+$$
+DECLARE
+    affected_rows int;
+BEGIN
+    DELETE FROM private.personal_messages
+    WHERE personal_messages.chat_id = delete_personal_message.chat_id
+      AND personal_messages.message_id = delete_personal_message.message_id
+      AND personal_messages.author = deleting_by;
+
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    RETURN affected_rows;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION private.delete_file_from_personal_message(chat_id uuid, message_id uuid, attachment_id uuid, deleting_by uuid)
+RETURNS int
+SECURITY DEFINER
+AS
+$$
+DECLARE
+    affected_rows int;
+BEGIN
+    WITH deleted AS (
+    DELETE FROM private.personal_messages_attachments
+    WHERE personal_messages_attachments.chat_id = delete_file_from_personal_message.chat_id
+      AND personal_messages_attachments.message_id = delete_file_from_personal_message.message_id
+      AND personal_messages_attachments.attachment_id = delete_file_from_personal_message.attachment_id
+      AND exists(
+        SELECT 1
+        FROM private.personal_messages
+        WHERE personal_messages.chat_id = delete_file_from_personal_message.chat_id
+          AND personal_messages.message_id = delete_file_from_personal_message.message_id
+          AND author = deleting_by
+        )
+    RETURNING attachment_id)
+
+    UPDATE private.media
+    SET links_count = links_count - 1
+    WHERE media_id IN (
+        SELECT deleted.attachment_id
+        FROM deleted
+        );
+
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    RETURN affected_rows;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sch_user.prepare_attachments_for_resending(chat_id uuid, chat_type en_chat_type, messages uuid[], resend_by uuid)
+SECURITY DEFINER
+SET SEARCH_PATH = sch_user, public, private
+AS
+$$
+    UPDATE private.media
+    SET links_count = links_count + 1
+    WHERE media_id IN (
+        SELECT unnest(m.attached_media)
+        FROM sch_user.get_messages_by_id(chat_id, messages, resend_by, chat_type) m
+        );
+$$
+LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION sch_user.check_public_chat_message_delete_ability(chat_id uuid, delete_by uuid, author uuid)
+RETURNS bool
+SECURITY DEFINER
+SET SEARCH_PATH = sch_user, public, private
+AS
+$$
+BEGIN
+    IF exists(
+    SELECT 1
+    FROM private.public_chats_banned_users pcbu
+    WHERE pcbu.chat_id = check_public_chat_message_delete_ability.chat_id
+      AND pcbu.user_id = delete_by
+    ) THEN
+        RAISE EXCEPTION 'User is banned in chat'
+            USING ERRCODE = '42501';
+    END IF;
+
+    IF (
+        SELECT coalesce(role::text, '')
+        FROM private.public_chats_members
+        WHERE public_chats_members.chat_id = check_public_chat_message_delete_ability.chat_id
+          AND public_chats_members.user_id = check_public_chat_message_delete_ability.delete_by
+        ) NOT IN ('Creator', 'Administrator') THEN
+        RAISE EXCEPTION 'You cannot delete this public message/attachment.'
+            USING ERRCODE = '42501';
+    END IF;
+
+    IF exists(
+        SELECT 1
+        FROM private.public_chats_members pcm
+        WHERE pcm.user_id = check_public_chat_message_delete_ability.delete_by
+        AND pcm.chat_id = check_public_chat_message_delete_ability.chat_id
+        AND pcm.role = 'Reader'
+    ) THEN
+        RAISE EXCEPTION 'Readers cannot perform this action in the public chat.' USING ERRCODE = '42501';
+    END IF;
+
+    PERFORM private.update_user_online_status(delete_by);
+
+    RETURN true;
+end;
 $$
 LANGUAGE plpgsql;

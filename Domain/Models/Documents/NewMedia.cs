@@ -12,5 +12,8 @@ namespace Domain.Models.Documents
 
         [BsonElement("contentType")]
         public required string ContentType { get; init; }
+
+        [BsonElement("linksCount")]
+        public required int LinksCount { get; init; }
     }
 }

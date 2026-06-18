@@ -9,6 +9,7 @@ using Application.Models.Output;
 using Application.Services.Interfaces;
 using Domain.Models.Types;
 using Domain.Stores;
+using Domain.Stores.MongoDB;
 using Infrastructure.Storage;
 using Microsoft.Extensions.Options;
 
@@ -19,16 +20,22 @@ namespace Application.Services.Implementations
         private readonly string _mediaPrefix;
         private readonly IPublicChatStore _publicChatStore;
         private readonly IMessagePublisher _messagePublisher;
-        private readonly IObjectStorage _objectStorage;
         private readonly IMessageCacheService _messageCacheService;
+        private readonly IMessagesService _messagesService;
+        private readonly IDeletedChatStore _deletedChatStore;
+        private readonly IObjectStorage _objectStorage;
         public PublicChatService(
             IPublicChatStore publicChatStore, IMessagePublisher messagePublisher,
-            IObjectStorage objectStorage, IMessageCacheService messageCacheService, IOptions<ApplicationServicesOptions> options)
+            IMessageCacheService messageCacheService, IMessagesService messagesService,
+            IDeletedChatStore deletedChatStore, IObjectStorage objectStorage,
+            IOptions<ApplicationServicesOptions> options)
         {
             _publicChatStore = publicChatStore;
             _messagePublisher = messagePublisher;
-            _objectStorage = objectStorage;
             _messageCacheService = messageCacheService;
+            _messagesService = messagesService;
+            _deletedChatStore = deletedChatStore;
+            _objectStorage = objectStorage;
             _mediaPrefix = options.Value.MediaPrefix;
         }
 
@@ -40,16 +47,25 @@ namespace Application.Services.Implementations
 
         public async Task BanUserAsync(Guid userId, Guid chatId, Guid bannedUserId, CancellationToken cancellationToken)
         {
-            await _publicChatStore.BanUserAsync(chatId, bannedUserId, userId, cancellationToken);            
+            await _publicChatStore.BanUserAsync(chatId, bannedUserId, userId, cancellationToken);
         }
 
         public async Task<Guid> CreateChatAsync(Guid creatorId, string name, bool isSearchable, FileUpload? avatar, PublicChatMemberRole defaultRole, CancellationToken cancellationToken)
         {
             Guid mediaId = Guid.NewGuid();
-            Guid chatId = await _publicChatStore.CreateNewChatAsync(name, creatorId, isSearchable, avatar?.ToMediaFile(mediaId), ChatRoleConverter.Convert(defaultRole), cancellationToken);
-            if (avatar is not null)
+            bool completed = false;
+            Guid chatId = Guid.Empty;
+            try
             {
-                await _objectStorage.SaveAsync(avatar.Content, mediaId, cancellationToken);
+                chatId = await _publicChatStore.CreateNewChatAsync(name, creatorId, isSearchable, avatar?.ToMediaFile(mediaId), ChatRoleConverter.Convert(defaultRole), cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed && avatar is not null)
+                {
+                    await _objectStorage.SaveAsync(avatar.Content, mediaId, CancellationToken.None);
+                }
             }
             return chatId;
         }
@@ -58,68 +74,119 @@ namespace Application.Services.Implementations
         {
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(chatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
-            await _publicChatStore.DeleteChatAsync(chatId, userId, cancellationToken);
-            await _messagePublisher.PublishAsync(new ChatDeletedMessage() 
-            { 
-                ChatId = chatId, 
-                ChatType = ChatType.Group, 
-                UserId = users
-            }, cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _deletedChatStore.SaveAsync(chatId, ChatTypeConverter.Convert(ChatType.Group), cancellationToken);
+                await _publicChatStore.DeleteChatAsync(chatId, userId, cancellationToken);
+                completed = true;
+            }
+            catch (Exception ex) when (!completed)
+            {
+                await _deletedChatStore.DeleteAsync(chatId, ChatTypeConverter.Convert(ChatType.Group), CancellationToken.None);
+                throw ex;
+            }
+            finally
+            {
+                if (completed)
+                    await _messagePublisher.PublishAsync(new ChatDeletedMessage()
+                    {
+                        ChatId = chatId,
+                        ChatType = ChatType.Group,
+                        UserId = users
+                    }, CancellationToken.None);
+            }
         }
 
-        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken)
+        public async Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken)
         {
             if (!Guid.TryParse(mediaLink[(_mediaPrefix.Length + 1)..], out Guid mediaId))
                 throw new DataValidationException("mediaLink");
+
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(chatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
-            Guid messageId = await _publicChatStore.GetMessageIdByMediaAsync(chatId, mediaId, cancellationToken);
-            await _publicChatStore.DeleteFileFromMessageAsync(chatId, messageId, userId, mediaId, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new FileDeletedMessage()
+            bool completed = false;
+
+            try
+            {
+                await _messagesService.DeleteAttachmentAsync(userId, chatId, ChatType.Group, messageId, mediaId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
                 {
-                    ChatId = chatId,
-                    ChatType = ChatType.Group,
-                    UserId = users,
-                    File = $"{_mediaPrefix}{mediaId}",
-                    MessageId = messageId
-                },
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(messageId, chatId, cancellationToken);
+                    await _messagePublisher.PublishAsync(
+                        new FileDeletedMessage()
+                        {
+                            ChatId = chatId,
+                            ChatType = ChatType.Group,
+                            UserId = users,
+                            File = $"{_mediaPrefix}{mediaId}",
+                            MessageId = messageId
+                        },
+                        CancellationToken.None);
+                    await _messageCacheService.InvalidateAsync(messageId, chatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task DeleteMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken)
         {
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(chatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
-            await _publicChatStore.DeleteMessageAsync(chatId, messageId, userId, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessageDeletedMessage()
+            bool completed = false;
+
+            try
+            {
+                await _messagesService.DeleteMessageAsync(userId, ChatType.Group, chatId, messageId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
                 {
-                    ChatId = chatId,
-                    ChatType = ChatType.Group,
-                    UserId = users,
-                    MessageId = messageId
-                },
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(messageId, chatId, cancellationToken);
+                    await _messagePublisher.PublishAsync(
+                        new MessageDeletedMessage()
+                        {
+                            ChatId = chatId,
+                            ChatType = ChatType.Group,
+                            UserId = users,
+                            MessageId = messageId
+                        },
+                        CancellationToken.None);
+                    await _messageCacheService.InvalidateAsync(messageId, chatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task EditMessageTextAsync(Guid userId, UpdatingMessage updatingMessage, CancellationToken cancellationToken)
         {
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(updatingMessage.ChatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
-            await _publicChatStore.UpdateMessageTextAsync(updatingMessage.ChatId, updatingMessage.MessageId, userId, updatingMessage.MessageText, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessageUpdatedMessage()
+            bool completed = false;
+
+            try
+            {
+                await _messagesService.UpdateMessageTextAsync(userId, ChatType.Group, updatingMessage, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
                 {
-                    ChatId = updatingMessage.ChatId,
-                    ChatType = ChatType.Group,
-                    UserId = users,
-                    MessageId = updatingMessage.MessageId
-                },
-                cancellationToken);
-            await _messageCacheService.InvalidateAsync(updatingMessage.MessageId, updatingMessage.ChatId, cancellationToken);
+                    await _messagePublisher.PublishAsync(
+                        new MessageUpdatedMessage()
+                        {
+                            ChatId = updatingMessage.ChatId,
+                            ChatType = ChatType.Group,
+                            UserId = users,
+                            MessageId = updatingMessage.MessageId
+                        },
+                        CancellationToken.None);
+                    await _messageCacheService.InvalidateAsync(updatingMessage.MessageId, updatingMessage.ChatId, CancellationToken.None);
+                }
+            }
         }
 
         public async Task<Models.Output.PublicChatBannedUser[]> GetBannedUsersAsync(Guid chatId, Guid userId, CancellationToken cancellationToken)
@@ -154,9 +221,8 @@ namespace Application.Services.Implementations
         {
             Models.Output.Message? message = await _messageCacheService.GetAsync(messageId, chatId, cancellationToken);
             if (message is null)
-            {
-                Domain.Models.Types.Message messageData = await _publicChatStore.GetMessageAsync(chatId, messageId, userId, cancellationToken);
-                message = new Models.Output.Message(messageData, _mediaPrefix, chatId);
+            {                
+                message = await _messagesService.GetMessageByIdAsync(userId, ChatType.Group, chatId, messageId, cancellationToken);
                 await _messageCacheService.SaveAsync(message, cancellationToken);
             }
             return message;
@@ -164,8 +230,7 @@ namespace Application.Services.Implementations
 
         public async Task<Models.Output.Message[]> GetMessagesAsync(Guid userId, Guid chatId, MessagesSelectOptions options, CancellationToken cancellationToken)
         {
-            Domain.Models.Types.Message[] messages = await _publicChatStore.GetMessagesAsync(chatId, userId, options.MessagesCount, options.SentBefore ?? DateTime.UtcNow, cancellationToken);
-            return messages.Select(m => new Models.Output.Message(m, _mediaPrefix, chatId)).ToArray();
+            return await _messagesService.GetMessagesAsync(userId, ChatType.Group, chatId, options, cancellationToken);
         }
 
         public async Task GiveMemberRoleAsync(Guid userId, Guid chatId, Guid memberId, PublicChatMemberRole newRole, CancellationToken cancellationToken)
@@ -212,52 +277,57 @@ namespace Application.Services.Implementations
         {
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(resendMessagesModel.ChatId, userId, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
-            Guid[] ids = await _publicChatStore.ResendMessagesAsync(resendMessagesModel.ChatId, userId, ChatTypeConverter.Convert(resendMessagesModel.SourceChatType), resendMessagesModel.SourceChatId, resendMessagesModel.Messages, cancellationToken);
-            await _messagePublisher.PublishAsync(
-                new MessagesSentMessage()
-                {
-                    ChatId = resendMessagesModel.ChatId,
-                    ChatType = ChatType.Group,
-                    UserId = users,
-                    MessagesId = ids,
-                },
-                cancellationToken);
+            
+            Guid[] ids = Array.Empty<Guid>();
+            bool completed = false;
+
+            try
+            {
+                ids = await _messagesService.ResendMessagesAsync(userId, ChatType.Group, resendMessagesModel, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                    await _messagePublisher.PublishAsync(
+                        new MessagesSentMessage()
+                        {
+                            ChatId = resendMessagesModel.ChatId,
+                            ChatType = ChatType.Group,
+                            UserId = users,
+                            MessagesId = ids,
+                        },
+                        CancellationToken.None);
+            }
             return ids;
         }
 
         public async Task<Guid> SendMessageAsync(SendingMessage sendingMessage, CancellationToken cancellationToken)
         {
-            MediaFile[]? attachments = null;
-            if (sendingMessage.Attachments != null && sendingMessage.Attachments.Length > 0)
-            {
-                var list = new List<MediaFile>(sendingMessage.Attachments.Length);
-                foreach (var a in sendingMessage.Attachments)
-                {
-                    var mediaId = Guid.NewGuid();
-                    await _objectStorage.SaveAsync(a.Content, mediaId, cancellationToken);
-                    list.Add(a.ToMediaFile(mediaId));
-                }
-                attachments = list.ToArray();
-            }
-
             Guid[] users = (await _publicChatStore.GetChatFullInfoAsync(sendingMessage.ChatId, sendingMessage.Author, cancellationToken))
                     .Members.Select(m => m.UserId).ToArray();
 
-            Guid id = await _publicChatStore.SendMessageAsync(
-                sendingMessage.ChatId, sendingMessage.Author,
-                sendingMessage.ReplyTo, sendingMessage.MessageText,
-                attachments, cancellationToken);
+            Guid id = Guid.Empty;
+            bool completed = false;
 
-            await _messagePublisher.PublishAsync(
-                new MessagesSentMessage()
-                {
-                    ChatId = sendingMessage.ChatId,
-                    ChatType = ChatType.Group,
-                    UserId = users,
-                    MessagesId = [id]
-                },
-                cancellationToken);
-
+            try
+            {
+                id = await _messagesService.SendUserMessageAsync(ChatType.Group, sendingMessage, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                    await _messagePublisher.PublishAsync(
+                        new MessagesSentMessage()
+                        {
+                            ChatId = sendingMessage.ChatId,
+                            ChatType = ChatType.Group,
+                            UserId = users,
+                            MessagesId = [id]
+                        },
+                        CancellationToken.None);
+            }
             return id;
         }
 
@@ -269,10 +339,18 @@ namespace Application.Services.Implementations
         public async Task UpdateChatAsync(Guid userId, Guid chatId, string? newName, bool? isSearchable, bool updateAvatar, FileUpload? newAvatar, PublicChatMemberRole? defaultRole, CancellationToken cancellationToken)
         {
             Guid? newAvatarId = newAvatar is not null ? Guid.NewGuid() : null;
-            await _publicChatStore.UpdateChatAsync(chatId, userId, newName, isSearchable, updateAvatar, newAvatar?.ToMediaFile(newAvatarId!.Value), (defaultRole.HasValue ? ChatRoleConverter.Convert(defaultRole.Value) : null), cancellationToken);
-            if (updateAvatar && newAvatar is not null && newAvatarId.HasValue)
+            bool completed = false;
+            try
             {
-                await _objectStorage.SaveAsync(newAvatar.Content, newAvatarId.Value, cancellationToken);
+                await _publicChatStore.UpdateChatAsync(chatId, userId, newName, isSearchable, updateAvatar, newAvatar?.ToMediaFile(newAvatarId!.Value), (defaultRole.HasValue ? ChatRoleConverter.Convert(defaultRole.Value) : null), cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed && updateAvatar && newAvatar is not null && newAvatarId.HasValue)
+                {
+                    await _objectStorage.SaveAsync(newAvatar.Content, newAvatarId.Value, CancellationToken.None);
+                }
             }
         }
     }

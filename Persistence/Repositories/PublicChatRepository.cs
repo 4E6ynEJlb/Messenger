@@ -2,6 +2,7 @@
 using Domain.Models.Types;
 using Domain.Stores;
 using Infrastructure.Database;
+using MongoDB.Driver.Core.Servers;
 using Npgsql;
 using Persistence.Exceptions;
 
@@ -241,25 +242,6 @@ namespace Persistence.Repositories
                 throw PostgresUserExceptionMapper.For(ex);
             }
         }
-        public async Task<Guid> GetMessageIdByMediaAsync(Guid chatId, Guid mediaId, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql =
-                    "SELECT * FROM sch_user.get_message_id_by_media(@chat_id, @attachment_id, @chat_type)";
-                return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    attachment_id = mediaId,
-                    chat_type = EnChatType.Public
-                }, cancellationToken)).ConfigureAwait(false);
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
 
         public async Task<Message[]> GetMessagesAsync(Guid chatId, Guid gettingBy, uint messagesCount, DateTime sentBefore,
             CancellationToken cancellationToken)
@@ -457,6 +439,27 @@ namespace Persistence.Repositories
                     author = senderId,
                     new_message_text = newText
                 }, cancellationToken)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
+        public async Task<bool> CheckMessageDeleteAbility(Guid chatId, Guid deleteBy, Guid author, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
+                const string sql =
+                    "SELECT sch_user.check_public_chat_message_delete_ability(@chat_id, @delete_by, @author)";
+                var result = await conn.ExecuteScalarAsync<bool>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    delete_by = deleteBy,
+                    author = author
+                }, cancellationToken)).ConfigureAwait(false);
+                return result;
             }
             catch (PostgresException ex)
             {

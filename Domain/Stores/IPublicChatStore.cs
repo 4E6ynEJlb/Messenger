@@ -11,8 +11,8 @@ namespace Domain.Stores
         public Task<PublicChatBannedUser[]> GetBannedUsersAsync(Guid chatId, Guid gettingBy, CancellationToken cancellationToken);
         public Task<Message[]> GetMessagesAsync(Guid chatId, Guid gettingBy, uint messagesCount, DateTime sentBefore, CancellationToken cancellationToken);
         public Task<Message> GetMessageAsync(Guid chatId, Guid messageId, Guid gettingBy, CancellationToken cancellationToken);
-        public Task<Guid> GetMessageIdByMediaAsync(Guid chatId, Guid mediaId, CancellationToken cancellationToken);
         public Task<AuditLogRecord[]> AuditChatAsync(Guid chatId, Guid gettingBy, uint pageNumber, uint pageSize, CancellationToken cancellationToken);
+        public Task<bool> CheckMessageDeleteAbility(Guid chatId, Guid deleteBy, Guid author, CancellationToken cancellationToken);
         public Task<Guid> CreateNewChatAsync(string chatName, Guid creatorId, bool isSearchable, MediaFile? avatar, EnPublicChatMemberRole defaultMemberRole, CancellationToken cancellationToken);
         public Task JoinChatAsync(Guid chatId, Guid userId, CancellationToken cancellationToken);
         public Task<bool> CheckMessageSendingAbilityAsync(Guid chatId, Guid senderId, Guid? replyTo, CancellationToken cancellationToken);

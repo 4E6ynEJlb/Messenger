@@ -27,20 +27,42 @@ namespace Persistence.Repositories
                 .SortBy(x => x.SentAt).FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<List<NewMessage>> GetListByChatAsync(EnChatType chatType, Guid chatId, DateTime sentBefore, int count, CancellationToken cancellationToken)
+        public async Task<List<NewMessage>> GetListByIdAsync(EnChatType chatType, Guid chatId, Guid[] ids, CancellationToken cancellationToken)
+        {
+            return await _collection.Find(x =>
+                x.ChatType == chatType &&
+                x.ChatId == chatId &&
+                ids.Contains(x.MessageId)).SortByDescending(x => x.SentAt)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<NewMessage>> GetListByChatAsync(EnChatType chatType, Guid chatId, DateTime sentBefore, uint count, CancellationToken cancellationToken)
         {
             return await _collection.Find(x =>
                 x.ChatType == chatType &&
                 x.ChatId == chatId &&
                 x.SentAt < sentBefore).SortByDescending(x => x.SentAt)
-            .Limit(count).ToListAsync(cancellationToken);
+            .Limit((int)count).ToListAsync(cancellationToken);
         }
 
-        public async Task<bool> CreateAsync(NewMessage message, CancellationToken cancellationToken)
+        public async Task<bool> SaveAsync(NewMessage message, CancellationToken cancellationToken)
         {
             try
             {
                 await _collection.InsertOneAsync(message, cancellationToken: cancellationToken);
+                return true;
+            }
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> SaveManyAsync(List<NewMessage> messages, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _collection.InsertManyAsync(messages, cancellationToken: cancellationToken);
                 return true;
             }
             catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)

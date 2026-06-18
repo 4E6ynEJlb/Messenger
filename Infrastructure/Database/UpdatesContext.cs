@@ -12,6 +12,7 @@ namespace Infrastructure.Database
         public IMongoCollection<DeletedAttachment> DeletedAttachments { get; }
         public IMongoCollection<NewMedia> NewMedia { get; }
         public IMongoCollection<PublicMessageUpdate> MessageUpdates { get; }
+        public IMongoCollection<DeletedChat> DeletedChats { get; }
 
         public UpdatesContext(IMongoClient client, IConfiguration configuration)
         {
@@ -26,6 +27,7 @@ namespace Infrastructure.Database
             DeletedAttachments = Database.GetCollection<DeletedAttachment>("deleted_attachments");
             NewMedia = Database.GetCollection<NewMedia>("new_media");
             MessageUpdates = Database.GetCollection<PublicMessageUpdate>("message_updates");
+            DeletedChats = Database.GetCollection<DeletedChat>("deleted_chats");
         }
 
         public async Task InitializeAsync()
@@ -35,32 +37,50 @@ namespace Infrastructure.Database
 
         private async Task CreateIndexesAsync()
         {
-            await NewMessages.Indexes.CreateManyAsync(
-            [
+            await NewMessages.Indexes.CreateOneAsync(
                 new CreateIndexModel<NewMessage>(
                 Builders<NewMessage>.IndexKeys
                     .Ascending(x => x.ChatType)
                     .Ascending(x => x.ChatId)
-                    .Descending(x => x.SentAt)
-            )
-            ]);
+                    .Ascending(x => x.SentAt)
+            ));
 
-            await DeletedMessages.Indexes.CreateOneAsync(
-                new CreateIndexModel<DeletedMessage>(
-                    Builders<DeletedMessage>.IndexKeys
-                        .Descending(x => x.DeletedAt)
-                ));
+            await DeletedMessages.Indexes.CreateManyAsync(
+                [
+                    new CreateIndexModel<DeletedMessage>(
+                        Builders<DeletedMessage>.IndexKeys
+                            .Ascending(x => x.DeletedAt)),
+                    new CreateIndexModel<DeletedMessage>(
+                        Builders<DeletedMessage>.IndexKeys
+                            .Ascending(x => x.SentAt)
+                            .Ascending(x => x.ChatType)
+                            .Ascending(x => x.ChatId))
+                ]
+            );
 
-            await DeletedAttachments.Indexes.CreateOneAsync(
-                new CreateIndexModel<DeletedAttachment>(
-                    Builders<DeletedAttachment>.IndexKeys
-                        .Descending(x => x.DeletedAt)
-                ));
+            await DeletedAttachments.Indexes.CreateManyAsync(
+                [
+                    new CreateIndexModel<DeletedAttachment>(
+                        Builders<DeletedAttachment>.IndexKeys
+                            .Ascending(x => x.DeletedAt)),
+                    new CreateIndexModel<DeletedAttachment>(
+                        Builders<DeletedAttachment>.IndexKeys
+                            .Ascending(x => x.Id.ChatType)
+                            .Ascending(x => x.Id.ChatId)
+                            .Ascending(x => x.Id.MessageId))
+                ]
+            );
 
             await MessageUpdates.Indexes.CreateOneAsync(
                 new CreateIndexModel<PublicMessageUpdate>(
                     Builders<PublicMessageUpdate>.IndexKeys
-                        .Descending(x => x.UpdatedAt)
+                        .Ascending(x => x.UpdatedAt)
+                ));
+
+            await DeletedChats.Indexes.CreateOneAsync(
+                new CreateIndexModel<DeletedChat>(
+                    Builders<DeletedChat>.IndexKeys
+                        .Ascending(x => x.DeletedAt)
                 ));
         }
     }

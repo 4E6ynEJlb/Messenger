@@ -1,9 +1,12 @@
+using Domain.Stores.MongoDB;
 using Infrastructure.Database;
 using Infrastructure.Storage;
 using MediaAPI.Middleware;
 using Minio;
 using Minio.AspNetCore;
+using MongoDB.Driver;
 using Npgsql;
+using Persistence.Repositories;
 using Prometheus;
 using Serilog;
 using Serilog.Events;
@@ -46,6 +49,16 @@ namespace MaintenanceAPI
                 return dataSourceBuilder.Build();
             });
 
+            builder.Services.AddSingleton<IMongoClient>(_ =>
+            {
+                var connection =
+                    builder.Configuration["Mongo:ConnectionString"]
+                    ?? throw new ArgumentNullException("Mongo connection");
+
+                return new MongoClient(connection);
+            });
+            builder.Services.AddSingleton<UpdatesContext>();
+
             ConfigurationManager configuration = builder.Configuration;
             LokiCredentials lokiCredentials = new LokiCredentials()
             {
@@ -77,6 +90,7 @@ namespace MaintenanceAPI
             builder.Host.UseSerilog();
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
+            builder.Services.AddSingleton<INewMediaStore, NewMediaRepository>();
 
             builder.Services.AddMinio(options =>
             {

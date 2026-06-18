@@ -21,5 +21,8 @@ namespace Domain.Models.Documents
 
         [BsonElement("deletedAt")]
         public required DateTime DeletedAt { get; init; }
+
+        [BsonElement("sentBefore")]
+        public required DateTime SentAt { get; init; }
     }
 }

@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS private.personal_messages_attachments
     attachment_id uuid NOT NULL,
     message_id uuid NOT NULL,
     chat_id uuid NOT NULL,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE INDEX IF NOT EXISTS personal_messages_attachments_message_id_hash_idx ON private.personal_messages_attachments USING HASH(message_id);
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS private.public_messages_attachments
     attachment_id uuid,
     message_id uuid,
     chat_id uuid,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE INDEX IF NOT EXISTS public_messages_attachments_message_id_hash_idx ON private.public_messages_attachments USING hash(message_id);
@@ -369,7 +369,7 @@ CREATE TABLE IF NOT EXISTS private.bot_messages_attachments
     attachment_id uuid,
     message_id uuid,
     chat_id uuid,
-    PRIMARY KEY (chat_id, attachment_id)
+    PRIMARY KEY (chat_id, message_id, attachment_id)
 ) PARTITION BY LIST (chat_id);
 
 CREATE TABLE IF NOT EXISTS private.bot_chats_active_buttons

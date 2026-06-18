@@ -15,7 +15,7 @@ namespace Persistence.Repositories
             _connectionScope = connectionScope;
         }
 
-        public async Task DeleteFileFromPersonalMessageAsync(Guid chatId, Guid attachmentId, Guid deletingBy,
+        public async Task DeleteFileFromPersonalMessageAsync(Guid chatId, Guid messageId, Guid attachmentId, Guid deletingBy,
             CancellationToken cancellationToken)
         {
             try
@@ -23,9 +23,14 @@ namespace Persistence.Repositories
                 await using var lease = await _connectionScope.LeaseConnectionAsync(cancellationToken)
                     .ConfigureAwait(false);
                 const string sql =
-                    "SELECT private.delete_file_from_personal_message(@chat_id, @attachment_id, @deleting_by)";
-                var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
-                    new { chat_id = chatId, attachment_id = attachmentId, deleting_by = deletingBy },
+                    "SELECT private.delete_file_from_personal_message(@chat_id, @message_id, @attachment_id, @deleting_by)";
+                var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new 
+                { 
+                    chat_id = chatId, 
+                    message_id = messageId,
+                    attachment_id = attachmentId, 
+                    deleting_by = deletingBy 
+                },
                     cancellationToken, lease.Transaction)).ConfigureAwait(false);
                 if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
@@ -54,18 +59,19 @@ namespace Persistence.Repositories
             }
         }
 
-        public async Task DeleteFileFromPublicMessageAsync(Guid chatId, Guid attachmentId, Guid deletingBy,
-            DateTime deletedAt, CancellationToken cancellationToken)
+        public async Task DeleteFileFromPublicMessageAsync(Guid chatId, Guid messageId, Guid attachmentId, 
+            Guid deletingBy, DateTime deletedAt, CancellationToken cancellationToken)
         {
             try
             {
                 await using var lease = await _connectionScope.LeaseConnectionAsync(cancellationToken)
                     .ConfigureAwait(false);
                 const string sql =
-                    "SELECT private.delete_file_from_public_message(@chat_id, @attachment_id, @deleting_by, @deleted_at)";
+                    "SELECT private.delete_file_from_public_message(@chat_id, @message_id, @attachment_id, @deleting_by, @deleted_at)";
                 var affected = await lease.Connection.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_id = chatId,
+                    message_id = messageId,
                     attachment_id = attachmentId,
                     deleting_by = deletingBy,
                     deleted_at = deletedAt,

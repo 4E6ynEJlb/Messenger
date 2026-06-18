@@ -7,8 +7,10 @@ namespace Domain.Stores.MongoDB
     {
         public Task<NewMessage?> GetOneByIdAsync(Guid messageId, CancellationToken cancellationToken);
         public Task<NewMessage?> GetOneEldestAsync(CancellationToken cancellationToken);
-        public Task<List<NewMessage>> GetListByChatAsync(EnChatType chatType, Guid chatId, DateTime sentBefore, int count, CancellationToken cancellationToken);
-        public Task<bool> CreateAsync(NewMessage message, CancellationToken cancellationToken);
+        public Task<List<NewMessage>> GetListByIdAsync(EnChatType chatType, Guid chatId, Guid[] ids, CancellationToken cancellationToken);
+        public Task<List<NewMessage>> GetListByChatAsync(EnChatType chatType, Guid chatId, DateTime sentBefore, uint count, CancellationToken cancellationToken);
+        public Task<bool> SaveAsync(NewMessage message, CancellationToken cancellationToken);
+        public Task<bool> SaveManyAsync(List<NewMessage> messages, CancellationToken cancellationToken);
         public Task<bool> UpdateAsync(NewMessage message, CancellationToken cancellationToken);
         public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
     }

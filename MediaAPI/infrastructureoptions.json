@@ -2,6 +2,10 @@
   "ConnectionStrings": {
     "DefaultConnection": "User ID=postgres;Password=zz778899;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;" ////
   },
+  "Mongo": {
+    "ConnectionString": "mongodb://admin:password@localhost:27017",
+    "Database": "messenger_updates"
+  },
   "MinioOptions": {
     "AccessKey": "minioadmin",
     "SecretKey": "minioadmin",

@@ -3598,35 +3598,3 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION sch_user.get_message_id_by_media(chat_id uuid, attachment_id uuid, chat_type en_chat_type)
-RETURNS uuid
-SECURITY DEFINER
-SET search_path = sch_user, public, private
-AS
-$$
-DECLARE
-    result uuid;
-BEGIN
-    CASE chat_type
-        WHEN 'Personal' THEN
-            SELECT pma.message_id INTO result
-            FROM private.personal_messages_attachments pma
-            WHERE pma.chat_id = get_message_id_by_media.chat_id
-              AND pma.attachment_id = get_message_id_by_media.attachment_id;
-        WHEN 'Public' THEN
-            SELECT pma.message_id INTO result
-            FROM private.public_messages_attachments pma
-            WHERE pma.chat_id = get_message_id_by_media.chat_id
-              AND pma.attachment_id = get_message_id_by_media.attachment_id;
-        WHEN 'Bot' THEN
-            SELECT bma.message_id INTO result
-            FROM private.bot_messages_attachments bma
-            WHERE bma.chat_id = get_message_id_by_media.chat_id
-              AND bma.attachment_id = get_message_id_by_media.attachment_id;
-    END CASE;
-
-    RETURN result;
-END;
-$$
-LANGUAGE plpgsql;

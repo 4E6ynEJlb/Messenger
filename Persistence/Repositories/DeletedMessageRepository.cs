@@ -1,4 +1,5 @@
 ﻿using Domain.Models.Documents;
+using Domain.Models.Types;
 using Domain.Stores.MongoDB;
 using Infrastructure.Database;
 using MongoDB.Driver;
@@ -24,6 +25,11 @@ namespace Persistence.Repositories
         {
             return await _collection.Find(x => x.MessageId == id)
                 .AnyAsync(cancellationToken);
+        }
+
+        public async Task<uint> GetDeletedCountAsync(Guid chatId, EnChatType chatType, DateTime sentBefore, CancellationToken cancellationToken)
+        {
+            return (uint)await _collection.CountDocumentsAsync(x => x.ChatId == chatId && x.ChatType == chatType && x.DeletedAt < sentBefore, cancellationToken: cancellationToken);
         }
 
         public async Task<bool> CreateAsync(DeletedMessage deletedMessage, CancellationToken cancellationToken)

@@ -18,7 +18,7 @@ namespace Application.Services.Interfaces
         public Task BlockUserAsync(Guid sourceUserId, Guid destinationUserId, CancellationToken cancellationToken);
         public Task UnblockUserAsync(Guid sourceUserId, Guid destinationUserId, CancellationToken cancellationToken);
         public Task DeleteMessageAsync(Guid userId, Guid chatId, Guid messageId, CancellationToken cancellationToken);
-        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, string mediaLink, CancellationToken cancellationToken);
+        public Task DeleteFileFromMessageAsync(Guid userId, Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken);
         public Task DeleteChatAsync(Guid userId, Guid chatId, CancellationToken cancellationToken);
     }
 }

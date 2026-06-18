@@ -11,6 +11,6 @@
         public required Guid? ReplyTo { get; init; }
         public required Guid? ResentFrom { get; init; }
         public required bool? IsBotResend { get; init; }
-        public required Guid[] AttachedMedia { get; init; }
+        public required Guid[] AttachedMedia { get; set; }
     }
 }
