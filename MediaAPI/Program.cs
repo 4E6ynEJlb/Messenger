@@ -1,6 +1,7 @@
 using Domain.Stores.MongoDB;
 using Infrastructure.Database;
 using Infrastructure.Storage;
+using MediaAPI;
 using MediaAPI.Middleware;
 using Minio;
 using Minio.AspNetCore;
@@ -36,70 +37,11 @@ namespace MaintenanceAPI
                     Url = "/media"
                 });
             });
-            builder.Services.AddSingleton(sp =>
-            {
-                var cs = builder.Configuration
-                    .GetConnectionString("DefaultConnection");
 
-                var dataSourceBuilder =
-                    new NpgsqlDataSourceBuilder(cs);
-
-                dataSourceBuilder.ConfigureMessengerPostgresTypes();
-
-                return dataSourceBuilder.Build();
-            });
-
-            builder.Services.AddSingleton<IMongoClient>(_ =>
-            {
-                var connection =
-                    builder.Configuration["Mongo:ConnectionString"]
-                    ?? throw new ArgumentNullException("Mongo connection");
-
-                return new MongoClient(connection);
-            });
-            builder.Services.AddSingleton<UpdatesContext>();
-
-            ConfigurationManager configuration = builder.Configuration;
-            LokiCredentials lokiCredentials = new LokiCredentials()
-            {
-                Login = builder.Configuration.GetSection("LokiOptions").GetValue<string>("User") ?? throw new ArgumentNullException("Loki User"),
-                Password = builder.Configuration.GetSection("LokiOptions").GetValue<string>("Password") ?? throw new ArgumentNullException("Loki Password")
-            };
-
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(configuration)
-                .Enrich.FromLogContext()
-                .WriteTo.GrafanaLoki(
-                    builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
-                    credentials: lokiCredentials,
-                    labels: new List<LokiLabel>()
-                    {
-                        new()
-                        {
-                            Key = "app",
-                            Value = "MediaAPI"
-                        }
-                    },
-                    propertiesAsLabels: new[]
-                    {
-                        "level"
-                    },
-                    restrictedToMinimumLevel: LogEventLevel.Information
-                ).CreateLogger();
-
-            builder.Host.UseSerilog();
-
-            builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
-            builder.Services.AddSingleton<INewMediaStore, NewMediaRepository>();
-
-            builder.Services.AddMinio(options =>
-            {
-                options.AccessKey = builder.Configuration.GetSection("MinioOptions").GetValue<string>("AccessKey") ?? throw new ArgumentNullException("MinIo Access Key");
-                options.SecretKey = builder.Configuration.GetSection("MinioOptions").GetValue<string>("SecretKey") ?? throw new ArgumentNullException("MinIo Secret Key");
-                options.Endpoint = builder.Configuration.GetSection("MinioOptions").GetValue<string>("Endpoint") ?? throw new ArgumentNullException("MinIo Endpoint");
-            });
-            builder.Services.Configure<Infrastructure.Models.MinioOptions>(builder.Configuration.GetSection("MinioOptions"));
-            builder.Services.AddSingleton<IObjectStorage, MinioStorage>();
+            builder.ConfigureInfrastructure();
+            builder.ConfigureLogging();
+            builder.ConfigureServices();
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -112,7 +54,6 @@ namespace MaintenanceAPI
                     c.RoutePrefix = "swagger";
                 });
             }
-
 
             app.UseAuthorization();
 

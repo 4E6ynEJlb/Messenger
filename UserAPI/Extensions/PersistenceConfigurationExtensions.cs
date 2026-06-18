@@ -19,6 +19,8 @@ namespace UserAPI.Extensions
             builder.Services.AddScoped<IRefreshTokenStore, RefreshTokenRepository>();
             builder.Services.AddScoped<ISecurityStore, SecurityRepository>();
             builder.Services.AddScoped<IGenericChatStore, GenericChatRepository>();
+            builder.Services.AddScoped<ISynchronizationStore, SynchronizationRepository>();
+            builder.Services.AddScoped<IMaintenanceStore, MaintenanceRepository>();
             builder.Services.AddScoped<UnitOfWorkConnectionScope>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

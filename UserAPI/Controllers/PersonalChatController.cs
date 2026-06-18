@@ -256,7 +256,7 @@ namespace UserAPI.Controllers
         public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
-            await _personalChatService.DeleteFileFromMessageAsync(userId, chatId, mediaLink, cancellationToken);
+            await _personalChatService.DeleteFileFromMessageAsync(userId, chatId, messageId, mediaLink, cancellationToken);
             return Ok();
         }
 
