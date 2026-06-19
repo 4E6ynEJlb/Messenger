@@ -3,7 +3,7 @@
     "DefaultConnection": "User ID=media_web_api;Password=media_web_api_password;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;"
   },
   "Mongo": {
-    "ConnectionString": "mongodb://admin:password@localhost:27017",
+    "ConnectionString": "mongodb://admin:password@mongodb:27017/?authSource=admin",
     "Database": "messenger_updates"
   },
   "MinioOptions": {

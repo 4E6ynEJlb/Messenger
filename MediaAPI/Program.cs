@@ -1,18 +1,6 @@
-using Domain.Stores.MongoDB;
-using Infrastructure.Database;
-using Infrastructure.Storage;
 using MediaAPI;
 using MediaAPI.Middleware;
-using Minio;
-using Minio.AspNetCore;
-using MongoDB.Driver;
-using Npgsql;
-using Persistence.Repositories;
 using Prometheus;
-using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.Grafana.Loki;
-using Serilog.Sinks.GrafanaLoki;
 
 namespace MaintenanceAPI
 {

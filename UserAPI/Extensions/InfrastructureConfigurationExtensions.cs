@@ -6,6 +6,9 @@ using Infrastructure.Storage;
 using MassTransit;
 using Minio;
 using Minio.AspNetCore;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Npgsql;
 using Serilog;
@@ -34,6 +37,8 @@ namespace UserAPI.Extensions
             });
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
+
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
             builder.Services.AddSingleton<IMongoClient>(_ =>
             {
