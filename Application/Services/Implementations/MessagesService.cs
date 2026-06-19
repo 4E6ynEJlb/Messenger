@@ -57,7 +57,7 @@ namespace Application.Services.Implementations
                 canCreate = await _genericChatStore.CheckAccessToMessageAsync(ChatTypeConverter.Convert(chatType), chatId, userId, messageId, cancellationToken)
                     && await _genericChatStore.CheckAccessToAttachmentAsync(ChatTypeConverter.Convert(chatType), chatId, messageId, mediaId, cancellationToken);
             }
-            catch (ResourceNotFoundException ex)
+            catch (InvalidUserInputException ex)
             {
                 NewMessage? message = await _newMessageStore.GetOneByIdAsync(messageId, cancellationToken);
 
@@ -72,6 +72,8 @@ namespace Application.Services.Implementations
 
                 if (chatType == ChatType.Group)
                     canCreate = await _publicChatStore.CheckMessageDeleteAbility(chatId, userId, message.Author, cancellationToken);
+                else                   
+                    canCreate = true;
             }
             finally
             {
@@ -112,7 +114,7 @@ namespace Application.Services.Implementations
 
                 canCreate = access;
             }
-            catch (ResourceNotFoundException ex)
+            catch (InvalidUserInputException ex)
             {
                 NewMessage? message = await _newMessageStore.GetOneByIdAsync(messageId, cancellationToken);
 
@@ -123,6 +125,8 @@ namespace Application.Services.Implementations
                     canCreate =
                         await _publicChatStore.CheckMessageDeleteAbility(chatId, userId,
                         message.Author, cancellationToken);
+                else
+                    canCreate = true;
 
                 sentAt = message.SentAt;
             }
@@ -241,7 +245,7 @@ namespace Application.Services.Implementations
 
             try
             {
-                switch (chatType)
+                switch (resendMessagesModel.SourceChatType)
                 {
                     case ChatType.Personal:
                         await _personalChatStore.CheckMessageSendingAbilityAsync(resendMessagesModel.SourceChatId, userId, null, cancellationToken);
@@ -322,7 +326,7 @@ namespace Application.Services.Implementations
                         break;
                 }
             }
-            catch (ResourceNotFoundException e) when (sendingMessage.ReplyTo is not null && e.Message == "Replying message not found")
+            catch (InvalidUserInputException e) when (sendingMessage.ReplyTo is not null && e?.InnerException?.Message == "Replying message not found")
             {
                 NewMessage? replyingMessage = await _newMessageStore.GetOneByIdAsync(sendingMessage.ReplyTo.Value, cancellationToken);
                 if (replyingMessage is null ||
@@ -414,14 +418,13 @@ namespace Application.Services.Implementations
                         throw new NotImplementedException("Editing messages in bot chats not implemented");
                 }
             }
-            catch (ResourceNotFoundException ex)
+            catch (DatabaseUpdateException ex) when (ex.Message == ErrorMessages.NO_CHANGES_APPLIED)
             {
                 NewMessage? message = await _newMessageStore.GetOneByIdAsync(updatingMessage.MessageId, cancellationToken);
 
                 if (message is null 
                     || message.Author != userId 
-                    || ChatTypeConverter.Convert(message.ChatType) != chatType 
-                    || message.ChatId != updatingMessage.ChatId)
+                    || ChatTypeConverter.Convert(message.ChatType) != chatType)
                     throw ex;
 
                 if(message.ResentFrom is not null)
@@ -506,7 +509,7 @@ namespace Application.Services.Implementations
                     continue;
                 }
 
-                if (mongoCurrent is null || mongoCurrent.SentAt < sqlCurrent!.SentAt)
+                if (mongoCurrent is null || mongoCurrent.SentAt < sqlCurrent?.SentAt)
                 {
                     if (!await _deletedMessageStore.CheckDeletionByIdAsync(sqlCurrent!.MessageId, cancellationToken))
                         result.Add(sqlCurrent!);
@@ -542,7 +545,7 @@ namespace Application.Services.Implementations
 
         private async Task<List<NewMessage>> MapRepliesId(Guid chatId, ChatType chatType, bool isBot, Guid author, List<Message> messages, Dictionary<Guid, int> increments, CancellationToken cancellationToken)
         {
-            Dictionary<Guid, Guid> idMap = messages.Select(m => m.MessageId).ToDictionary(k => Guid.NewGuid());
+            Dictionary<Guid, Guid> idMap = messages.ToDictionary(k => k.MessageId, v => Guid.NewGuid());
             List<NewMessage> newMessages = new List<NewMessage>(messages.Count);
             DateTime sentAt = DateTime.UtcNow;
 
@@ -583,6 +586,6 @@ namespace Application.Services.Implementations
             return newMessages;
         }
 
-        private List<Guid> ParseMedia(string[] links) => links.Select(l => Guid.Parse(l.Replace(_mediaPrefix, ""))).ToList();
+        private List<Guid> ParseMedia(string[] links) => links.Select(l => Guid.Parse(l.Remove(0, _mediaPrefix.Length + 1))).ToList();
     }
 }

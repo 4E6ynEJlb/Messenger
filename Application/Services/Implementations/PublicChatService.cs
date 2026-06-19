@@ -265,12 +265,50 @@ namespace Application.Services.Implementations
 
         public async Task RemoveAndBanChatMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken)
         {
-            await _publicChatStore.DeleteAndBanChatMemberAsync(chatId, memberId, userId, cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _publicChatStore.DeleteAndBanChatMemberAsync(chatId, memberId, userId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                {
+                    await _messagePublisher.PublishAsync(
+                        new ChatDeletedMessage
+                        {
+                            ChatId = chatId,
+                            ChatType = ChatType.Group,
+                            UserId = [memberId]
+                        },
+                        CancellationToken.None);
+                }
+            }
         }
 
         public async Task RemoveMemberAsync(Guid userId, Guid chatId, Guid memberId, CancellationToken cancellationToken)
         {
-            await _publicChatStore.DeleteChatMemberAsync(chatId, memberId, userId, cancellationToken);
+            bool completed = false;
+            try
+            {
+                await _publicChatStore.DeleteChatMemberAsync(chatId, memberId, userId, cancellationToken);
+                completed = true;
+            }
+            finally
+            {
+                if (completed)
+                {
+                    await _messagePublisher.PublishAsync(
+                        new ChatDeletedMessage
+                        {
+                            ChatId = chatId,
+                            ChatType = ChatType.Group,
+                            UserId = [memberId]
+                        },
+                        CancellationToken.None);
+                }
+            }
         }
 
         public async Task<Guid[]> ResendMessagesAsync(Guid userId, ResendMessagesModel resendMessagesModel, CancellationToken cancellationToken)

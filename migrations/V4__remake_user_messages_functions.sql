@@ -12,7 +12,7 @@ SET search_path = sch_user, public, private
 AS
 $$
 BEGIN
-    SELECT private.update_user_online_status(author);
+    PERFORM private.update_user_online_status(author);
 
     IF NOT exists(
         SELECT 1
@@ -37,10 +37,10 @@ BEGIN
         USING ERRCODE = '23514';
     end if;
 
-    UPDATE private.personal_chats_members
+    UPDATE private.personal_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = check_personal_message_send_ability.chat_id
-      AND user_id = author;
+    WHERE pcm.chat_id = check_personal_message_send_ability.chat_id
+      AND pcm.user_id = author;
 
     IF exists(
         SELECT 1
@@ -57,7 +57,7 @@ BEGIN
         SELECT 1
         FROM private.personal_messages pm
         WHERE check_personal_message_send_ability.chat_id = pm.chat_id
-          AND message_id = check_personal_message_send_ability.reply_to
+          AND pm.message_id = check_personal_message_send_ability.reply_to
     ) THEN
         RAISE EXCEPTION 'Replying message not found'
         USING ERRCODE = '23514';
@@ -75,7 +75,7 @@ SET search_path = sch_user, public, private
 AS
 $$
 BEGIN
-    SELECT private.update_user_online_status(author);
+    PERFORM private.update_user_online_status(author);
 
     IF NOT exists(
         SELECT 1
@@ -87,10 +87,10 @@ BEGIN
         USING ERRCODE = '23514';
     END IF;
 
-    UPDATE private.public_chats_members
+    UPDATE private.public_chats_members pcm
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = check_public_message_send_ability.chat_id
-      AND user_id = author;
+    WHERE pcm.chat_id = check_public_message_send_ability.chat_id
+      AND pcm.user_id = author;
 
     IF exists(
         SELECT 1
@@ -134,7 +134,7 @@ SET search_path = sch_user, public, private
 AS
 $$
 BEGIN
-    SELECT private.update_user_online_status(author);
+    PERFORM private.update_user_online_status(author);
 
     IF NOT exists(
         SELECT 1
@@ -156,10 +156,10 @@ BEGIN
         USING ERRCODE = '23514';
     end if;
 
-    UPDATE private.bot_chats
+    UPDATE private.bot_chats bc
     SET was_in_chat = CURRENT_TIMESTAMP
-    WHERE chat_id = check_bot_message_send_ability.chat_id
-      AND user_id = author;
+    WHERE bc.chat_id = check_bot_message_send_ability.chat_id
+      AND bc.user_id = author;
 
     IF exists(
         SELECT 1

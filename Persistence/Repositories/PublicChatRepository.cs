@@ -432,13 +432,14 @@ namespace Persistence.Repositories
                 await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
                 const string sql =
                     "SELECT sch_user.update_public_text_message(@chat_id, @message_id, @author, @new_message_text)";
-                await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
+                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
                 {
                     chat_id = chatId,
                     message_id = messageId,
                     author = senderId,
                     new_message_text = newText
                 }, cancellationToken)).ConfigureAwait(false);
+                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
             }
             catch (PostgresException ex)
             {
