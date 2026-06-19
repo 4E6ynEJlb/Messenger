@@ -5,6 +5,9 @@ using Domain.Stores.MongoDB;
 using Infrastructure.Database;
 using Infrastructure.Storage;
 using Minio.AspNetCore;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Npgsql;
 using Persistence.Repositories;
@@ -31,6 +34,7 @@ namespace MediaAPI
                 return dataSourceBuilder.Build();
             });
 
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
             builder.Services.AddSingleton<IMongoClient>(_ =>
             {
                 var connection =

@@ -102,7 +102,6 @@ services:
 
   mongodb:
     image: mongo:8
-    container_name: messenger-mongodb
     restart: unless-stopped
 
     environment:
@@ -111,7 +110,7 @@ services:
       MONGO_INITDB_DATABASE: messenger_updates
 
     ports:
-      - "27017:27017"
+      - "27018:27017"
 
     volumes:
       - mongodb_data:/data/db
