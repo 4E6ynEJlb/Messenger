@@ -2,9 +2,9 @@
 using Domain.Models.Types;
 using Domain.Stores;
 using Infrastructure.Database;
+using MongoDB.Driver.Core.Servers;
 using Npgsql;
 using Persistence.Exceptions;
-using Persistence;
 
 namespace Persistence.Repositories
 {
@@ -90,6 +90,27 @@ namespace Persistence.Repositories
             }
         }
 
+        public async Task<bool> CheckMessageSendingAbilityAsync(Guid chatId, Guid senderId, Guid? replyTo,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
+                const string sql =
+                    "SELECT sch_user.check_public_message_send_ability(@chat_id, @author, @reply_to)";
+                return await conn.ExecuteScalarAsync<bool>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    author = senderId,
+                    reply_to = replyTo
+                }, cancellationToken)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
         public async Task DeleteAndBanChatMemberAsync(Guid chatId, Guid memberId, Guid deletingBy,
             CancellationToken cancellationToken)
         {
@@ -143,46 +164,7 @@ namespace Persistence.Repositories
                 throw PostgresUserExceptionMapper.For(ex);
             }
         }
-
-        public async Task DeleteFileFromMessageAsync(Guid chatId, Guid messageId, Guid fileId, Guid deletingBy,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql =
-                    "SELECT sch_user.delete_file_from_public_message(@chat_id, @attachment_id, @deleting_by)";
-                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    attachment_id = fileId,
-                    deleting_by = deletingBy
-                }, cancellationToken)).ConfigureAwait(false);
-                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
-
-        public async Task DeleteMessageAsync(Guid chatId, Guid messageId, Guid deletingBy, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql = "SELECT sch_user.delete_public_message(@chat_id, @message_id, @deleting_by)";
-                var affected = await conn.ExecuteScalarAsync<int>(RepositoryExecution.Cmd(sql,
-                    new { chat_id = chatId, message_id = messageId, deleting_by = deletingBy }, cancellationToken))
-                    .ConfigureAwait(false);
-                if (affected == 0) throw new DatabaseUpdateException(new Exception("No rows affected."));
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
-
+        
         public async Task<PublicChatBannedUser[]> GetBannedUsersAsync(Guid chatId, Guid gettingBy, CancellationToken cancellationToken)
         {
             try
@@ -254,25 +236,6 @@ namespace Persistence.Repositories
                     new { chat_id = chatId, message_id = messageId, getting_by = gettingBy }, cancellationToken))
                     .ConfigureAwait(false);
                 return row ?? throw new ResourceNotFoundException(new Exception("Message not found."));
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
-        public async Task<Guid> GetMessageIdByMediaAsync(Guid chatId, Guid mediaId, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql =
-                    "SELECT * FROM sch_user.get_message_id_by_media(@chat_id, @attachment_id, @chat_type)";
-                return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    attachment_id = mediaId,
-                    chat_type = EnChatType.Public
-                }, cancellationToken)).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -355,37 +318,7 @@ namespace Persistence.Repositories
             {
                 throw PostgresUserExceptionMapper.For(ex);
             }
-        }
-
-        public async Task<Guid[]> ResendMessagesAsync(Guid chatId, Guid senderId, EnChatType sourceChatType, Guid sourceChatId,
-            Guid[] messages, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql = """
-                    SELECT * FROM sch_user.resend_to_public_messages(
-                        @chat_id,
-                        @author,
-                        @source_chat_type::en_chat_type,
-                        @source_chat_id,
-                        @messages_id)
-                    """;
-                var rows = await conn.QueryAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    author = senderId,
-                    source_chat_type = sourceChatType.ToString(),
-                    source_chat_id = sourceChatId,
-                    messages_id = messages
-                }, cancellationToken)).ConfigureAwait(false);
-                return rows.ToArray();
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
+        }        
 
         public async Task<PublicChatFullInformation[]> SearchChatsAsync(string namePart, Guid gettingBy, uint pageNumber,
             uint pageSize, CancellationToken cancellationToken)
@@ -409,30 +342,7 @@ namespace Persistence.Repositories
                 throw PostgresUserExceptionMapper.For(ex);
             }
         }
-
-        public async Task<Guid> SendMessageAsync(Guid chatId, Guid senderId, Guid? replyTo, string? text, MediaFile[]? attachments,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
-                const string sql =
-                    "SELECT sch_user.send_public_message(@chat_id, @author, @message_text, @attachments, @reply_to)";
-                return await conn.ExecuteScalarAsync<Guid>(RepositoryExecution.Cmd(sql, new
-                {
-                    chat_id = chatId,
-                    author = senderId,
-                    message_text = text,
-                    attachments,
-                    reply_to = replyTo
-                }, cancellationToken)).ConfigureAwait(false);
-            }
-            catch (PostgresException ex)
-            {
-                throw PostgresUserExceptionMapper.For(ex);
-            }
-        }
-
+        
         public async Task UnbanUserAsync(Guid chatId, Guid userId, Guid unbanningBy, CancellationToken cancellationToken)
         {
             try
@@ -529,6 +439,27 @@ namespace Persistence.Repositories
                     author = senderId,
                     new_message_text = newText
                 }, cancellationToken)).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                throw PostgresUserExceptionMapper.For(ex);
+            }
+        }
+
+        public async Task<bool> CheckMessageDeleteAbility(Guid chatId, Guid deleteBy, Guid author, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var conn = await _connectionFactory.CreateConnectionAsync().ConfigureAwait(false);
+                const string sql =
+                    "SELECT sch_user.check_public_chat_message_delete_ability(@chat_id, @delete_by, @author)";
+                var result = await conn.ExecuteScalarAsync<bool>(RepositoryExecution.Cmd(sql, new
+                {
+                    chat_id = chatId,
+                    delete_by = deleteBy,
+                    author = author
+                }, cancellationToken)).ConfigureAwait(false);
+                return result;
             }
             catch (PostgresException ex)
             {

@@ -6,6 +6,10 @@ using Infrastructure.Storage;
 using MassTransit;
 using Minio;
 using Minio.AspNetCore;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using Npgsql;
 using Serilog;
 using Serilog.Events;
@@ -16,7 +20,7 @@ namespace UserAPI.Extensions
 {
     public static class InfrastructureConfigurationExtensions
     {
-        public static void ConfigureDatabaseConnectionFactory(this WebApplicationBuilder builder)
+        public static void ConfigureDatabases(this WebApplicationBuilder builder)
         {
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
             builder.Services.AddSingleton(sp =>
@@ -33,6 +37,20 @@ namespace UserAPI.Extensions
             });
 
             builder.Services.AddSingleton<IDbConnectionFactory, NpgSqlConnectionFactory>();
+
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+            builder.Services.AddSingleton<IMongoClient>(_ =>
+            {
+                var connection =
+                    builder.Configuration["Mongo:ConnectionString"]
+                    ?? throw new ArgumentNullException("Mongo connection");
+
+                return new MongoClient(connection);
+            });
+
+
+            builder.Services.AddSingleton<UpdatesContext>();
         }
 
         public static void ConfigureMinioStorage(this WebApplicationBuilder builder)
@@ -75,6 +93,9 @@ namespace UserAPI.Extensions
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .Enrich.FromLogContext()
+                .Filter.ByExcluding(logEvent =>
+                    logEvent.Properties.TryGetValue("RequestPath", out LogEventPropertyValue? path)
+                    && path.ToString() == "\"/metrics\"")
                 .WriteTo.GrafanaLoki(
                     builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
                     credentials: lokiCredentials,

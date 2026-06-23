@@ -11,6 +11,7 @@ namespace UserAPI.Extensions
         {
             builder.Services.AddScoped<IUpdatesService, UpdatesService>();
             builder.Services.AddScoped<IMessagePublisher, MessagePublisher>();
+            builder.Services.AddScoped<IMessagesService, MessagesService>();
             builder.Services.AddSingleton<IBotUserCacheService, BotUserCacheService>();
             builder.Services.AddSingleton<IMessageCacheService, MessageCacheService>();
 

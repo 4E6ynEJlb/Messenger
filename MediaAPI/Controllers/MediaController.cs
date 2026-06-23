@@ -1,8 +1,5 @@
 ﻿using Application.Models.Output;
-using Dapper;
-using Domain.Models.Types;
-using Infrastructure.Database;
-using Infrastructure.Storage;
+using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaintenanceAPI.Controllers
@@ -10,12 +7,10 @@ namespace MaintenanceAPI.Controllers
     [ApiController]
     public class MediaController : ControllerBase
     {
-        private readonly IDbConnectionFactory _connectionFactory;
-        private readonly IObjectStorage _objectStorage;
-        public MediaController(IDbConnectionFactory dbConnectionFactory, IObjectStorage objectStorage)
+        private readonly IMediaService _mediaService;
+        public MediaController(IMediaService mediaService)
         {
-            _connectionFactory = dbConnectionFactory;
-            _objectStorage = objectStorage;
+            _mediaService = mediaService;
         }
 
         [ProducesResponseType(typeof(FileResult), 200)]
@@ -24,27 +19,11 @@ namespace MaintenanceAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken, bool download = false)
         {
-            await using var conn = await _connectionFactory.CreateConnectionAsync();
-            const string sql = 
-                """
-                SELECT (media_id, file_name, content_type) :: media_file
-                FROM private.media
-                WHERE media_id = @media_id
-                LIMIT 1
-                """;
-            var file = await conn.ExecuteScalarAsync<MediaFile>(Cmd(sql,
-                new { media_id = id }, cancellationToken));
-            if (file is null)
-            {
-                return NotFound();
-            }
-            var stream = await _objectStorage.GetAsync(id, cancellationToken);
+            MediaStream file = await _mediaService.GetFile(id, cancellationToken);
 
-            return download?new FileStreamResult(stream, file.ContentType)
-            {
-                FileDownloadName = file.FileName
-            } : 
-            new FileStreamResult(stream, file.ContentType);
+            return download 
+                ? new FileStreamResult(file.Content, file.ContentType) {FileDownloadName = file.FileName} 
+                : new FileStreamResult(file.Content, file.ContentType);
         }
 
         [ProducesResponseType(typeof(MediaInfo), 200)]
@@ -52,30 +31,8 @@ namespace MaintenanceAPI.Controllers
         [ProducesResponseType(404)]
         [HttpGet("{id}/[action]")]
         public async Task<IActionResult> Info(Guid id, CancellationToken cancellationToken)
-        {
-            await using var conn = await _connectionFactory.CreateConnectionAsync();
-            const string sql =
-                """
-                SELECT (media_id, file_name, content_type) :: media_file
-                FROM private.media
-                WHERE media_id = @media_id
-                LIMIT 1
-                """;
-            var file = await conn.ExecuteScalarAsync<MediaFile>(Cmd(sql,
-                new { media_id = id }, cancellationToken));
-            if (file is null)
-            {
-                return NotFound();
-            }
-            MediaInfo mediaInfo = new()
-            {
-                FileName = file.FileName,
-                ContentType = file.ContentType
-            };
-            return Ok(mediaInfo);
+        {            
+            return Ok(await _mediaService.GetFileInfo(id, cancellationToken));
         }
-
-        private static CommandDefinition Cmd(string sql, object? param, CancellationToken cancellationToken) =>
-            new(sql, param, cancellationToken: cancellationToken);
     }
 }

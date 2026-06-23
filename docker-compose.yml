@@ -1,13 +1,14 @@
 services:
-  maintenance:
-    image: ${DOCKER_REGISTRY-}maintenance
-    build:
-      context: .
-      dockerfile: Maintenance/Dockerfile
-    depends_on:
-      - npgsql-container
-      - flyway
-      - loki
+  # maintenance:
+  #   image: ${DOCKER_REGISTRY-}maintenance
+  #   build:
+  #     context: .
+  #     dockerfile: Maintenance/Dockerfile
+  #   depends_on:
+  #     - npgsql-container
+  #     - mongodb
+  #     - flyway
+  #     - loki
 
   userapi-1:
     image: ${DOCKER_REGISTRY-}userapi
@@ -16,8 +17,8 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -31,8 +32,8 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -46,8 +47,23 @@ services:
       dockerfile: UserAPI/Dockerfile
     depends_on:
       - npgsql-container
+      - mongodb
       - flyway
-      - mediaapi
+      - redis-1
+      - redis-2
+      - kafka
+      - loki
+      - prometheus
+      - grafana
+  userapi-4:
+    image: ${DOCKER_REGISTRY-}userapi
+    build:
+      context: .
+      dockerfile: UserAPI/Dockerfile
+    depends_on:
+      - npgsql-container
+      - mongodb
+      - flyway
       - redis-1
       - redis-2
       - kafka
@@ -56,7 +72,13 @@ services:
       - grafana
  
 
-  mediaapi:
+  mediaapi-1:
+    image: ${DOCKER_REGISTRY-}mediaapi
+    build:
+      context: .
+      dockerfile: MediaAPI/Dockerfile
+
+  mediaapi-2:
     image: ${DOCKER_REGISTRY-}mediaapi
     build:
       context: .
@@ -79,6 +101,21 @@ services:
       retries: 10
     volumes:
       - db-data:/var/lib/postgresql
+
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: messenger_updates
+
+    ports:
+      - "27018:27017"
+
+    volumes:
+      - mongodb_data:/data/db
 
 
   minio:
@@ -199,12 +236,27 @@ services:
       - userapi-1
       - userapi-2
       - userapi-3
+      - userapi-4
+      - mediaapi-1
+      - mediaapi-2
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - "http"
+      - "nginx:80"
+      - "--domain=fetch-estranged-pointer.ngrok-free.dev"
+    environment:
+      NGROK_AUTHTOKEN: -----------------------------------
+    depends_on:
+      - nginx
 
 
 volumes:
   miniodata:
   db-data:
+  mongodb_data:
   kafka-data:
   grafana: ~
   loki: ~

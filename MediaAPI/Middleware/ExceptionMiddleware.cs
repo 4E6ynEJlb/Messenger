@@ -24,7 +24,7 @@ namespace MediaAPI.Middleware
             }
             catch (Exception exception)
             {
-                await HandleUnknownException(context, exception);
+                 await HandleUnknownException(context, exception);
             }
         }
 

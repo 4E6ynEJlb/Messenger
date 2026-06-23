@@ -380,6 +380,7 @@ namespace UserAPI.Controllers
         /// 
         /// </summary>
         /// <param name="chatId"></param>
+        /// <param name="messageId"></param>
         /// <param name="mediaLink"></param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>404 if chat or message is not belonging to current user, 403 if message is resend</returns>
@@ -389,10 +390,10 @@ namespace UserAPI.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpDelete("[action]")]
-        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, string mediaLink, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteFileFromMessage(Guid chatId, Guid messageId, string mediaLink, CancellationToken cancellationToken)
         {
             Guid userId = HttpContext.GetUserId();
-            await _publicChatService.DeleteFileFromMessageAsync(userId, chatId, mediaLink, cancellationToken);
+            await _publicChatService.DeleteFileFromMessageAsync(userId, chatId, messageId, mediaLink, cancellationToken);
             return Ok();
         }
 
