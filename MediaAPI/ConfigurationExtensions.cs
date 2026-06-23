@@ -69,6 +69,9 @@ namespace MediaAPI
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .Enrich.FromLogContext()
+                .Filter.ByExcluding(logEvent =>
+                    logEvent.Properties.TryGetValue("RequestPath", out LogEventPropertyValue? path)
+                    && path.ToString() == "\"/metrics\"")
                 .WriteTo.GrafanaLoki(
                     builder.Configuration["LokiOptions:URI"] ?? throw new ArgumentNullException("Loki URI"),
                     credentials: lokiCredentials,
@@ -78,6 +81,12 @@ namespace MediaAPI
                         {
                             Key = "app",
                             Value = "MediaAPI"
+                        },
+
+                        new()
+                        {
+                            Key = "instance",
+                            Value = Environment.GetEnvironmentVariable("GROUP_ID") ?? "unknown"
                         }
                     },
                     propertiesAsLabels: new[]

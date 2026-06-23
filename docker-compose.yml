@@ -19,7 +19,6 @@ services:
       - npgsql-container
       - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -35,7 +34,6 @@ services:
       - npgsql-container
       - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -51,7 +49,6 @@ services:
       - npgsql-container
       - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -67,7 +64,6 @@ services:
       - npgsql-container
       - mongodb
       - flyway
-      - mediaapi
       - redis-1
       - redis-2
       - kafka
@@ -76,7 +72,13 @@ services:
       - grafana
  
 
-  mediaapi:
+  mediaapi-1:
+    image: ${DOCKER_REGISTRY-}mediaapi
+    build:
+      context: .
+      dockerfile: MediaAPI/Dockerfile
+
+  mediaapi-2:
     image: ${DOCKER_REGISTRY-}mediaapi
     build:
       context: .
@@ -234,6 +236,9 @@ services:
       - userapi-1
       - userapi-2
       - userapi-3
+      - userapi-4
+      - mediaapi-1
+      - mediaapi-2
 
   ngrok:
     image: ngrok/ngrok:latest
