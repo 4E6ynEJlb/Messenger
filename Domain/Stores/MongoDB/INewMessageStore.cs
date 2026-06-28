@@ -1,4 +1,5 @@
 ﻿using Domain.Models.Documents;
+using Domain.Models.Documents.Keys;
 using Domain.Models.Types;
 
 namespace Domain.Stores.MongoDB
@@ -12,6 +13,7 @@ namespace Domain.Stores.MongoDB
         public Task<bool> SaveAsync(NewMessage message, CancellationToken cancellationToken);
         public Task<bool> SaveManyAsync(List<NewMessage> messages, CancellationToken cancellationToken);
         public Task<bool> UpdateAsync(NewMessage message, CancellationToken cancellationToken);
+        public Task DeleteByChatAsync(DeletedChatKey chat, CancellationToken cancellationToken);
         public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken);
     }
 }

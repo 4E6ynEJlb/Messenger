@@ -17,7 +17,7 @@ DECLARE
     deleting_chat_id uuid;
     chat_id_converted_to_text text;
 BEGIN
-    SELECT array_agg(pc.chat_id) INTO chats_id
+    SELECT coalesce(array_agg(pc.chat_id), '{}') INTO chats_id
     FROM private.public_chats pc
     WHERE NOT EXISTS (
         SELECT 1
@@ -61,7 +61,7 @@ BEGIN
         WHERE public_chats.chat_id = deleting_chat_id;
     END LOOP;
 
-    SELECT array_agg(pc.chat_id) INTO chats_id
+    SELECT coalesce(array_agg(pc.chat_id), '{}') INTO chats_id
     FROM private.personal_chats pc
     WHERE NOT EXISTS (
         SELECT 1
@@ -95,7 +95,7 @@ BEGIN
         WHERE personal_chats.chat_id = deleting_chat_id;
     END LOOP;
 
-    SELECT array_agg(bc.chat_id) INTO chats_id
+    SELECT coalesce(array_agg(bc.chat_id), '{}') INTO chats_id
     FROM private.bot_chats bc
     WHERE bc.user_id IS NULL;
 

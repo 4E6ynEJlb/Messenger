@@ -1,0 +1,20 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "User ID=postgres;Password=zz778899;Server=npgsql-container;Port=5432;Database=messenger_db;Pooling=true;"
+  },
+  "Mongo": {
+    "ConnectionString": "mongodb://admin:password@mongodb:27017/?authSource=admin",
+    "Database": "messenger_updates"
+  },
+  "MinioOptions": {
+    "AccessKey": "minioadmin",
+    "SecretKey": "minioadmin",
+    "Endpoint": "minio:9000",
+    "BucketName": "media"
+  },
+  "LokiOptions": {
+    "User": "admin",
+    "Password": "admin",
+    "URI": "http://loki:3100"
+  }
+}
