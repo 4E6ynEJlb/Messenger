@@ -49,5 +49,10 @@ namespace Persistence.Repositories
             DeleteResult result = await _collection.DeleteOneAsync(x => x.Id == key, cancellationToken);
             return result.DeletedCount > 0;
         }
+
+        public async Task DeleteByChatAsync(DeletedChatKey chat, CancellationToken cancellationToken)
+        {
+            await _collection.DeleteManyAsync(x => x.Id.ChatType == chat.ChatType && x.Id.ChatId == chat.ChatId, cancellationToken);
+        }
     }
 }

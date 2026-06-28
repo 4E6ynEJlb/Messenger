@@ -18,6 +18,7 @@
   </Project>
   <Project Path="Domain/Domain.csproj" />
   <Project Path="Infrastructure/Infrastructure.csproj" />
+  <Project Path="Jobs/Jobs.csproj" Id="3aa77ae2-190b-4420-b23a-fc28abffe095" />
   <Project Path="Maintenance/Maintenance.csproj" />
   <Project Path="MediaAPI/MediaAPI.csproj" />
   <Project Path="Persistence/Persistence.csproj" />

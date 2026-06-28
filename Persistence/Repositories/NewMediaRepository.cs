@@ -21,6 +21,12 @@ namespace Persistence.Repositories
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        public async Task<List<NewMedia>> GetManyByIdAsync(List<Guid> ids, CancellationToken cancellationToken)
+        {
+            return await _collection.Find(x => ids.Contains(x.MediaId))
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<bool> CreateAsync(NewMedia newMedia, CancellationToken cancellationToken)
         {
             try

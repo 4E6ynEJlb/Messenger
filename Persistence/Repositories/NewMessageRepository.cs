@@ -1,4 +1,5 @@
 ﻿using Domain.Models.Documents;
+using Domain.Models.Documents.Keys;
 using Domain.Models.Types;
 using Domain.Stores.MongoDB;
 using Infrastructure.Database;
@@ -82,6 +83,11 @@ namespace Persistence.Repositories
         {
             DeleteResult result = await _collection.DeleteOneAsync(x => x.MessageId == id, cancellationToken);
             return result.DeletedCount > 0;
+        }
+
+        public async Task DeleteByChatAsync(DeletedChatKey chat, CancellationToken cancellationToken)
+        {
+            await _collection.DeleteManyAsync(x => x.ChatType == chat.ChatType && x.ChatId == chat.ChatId, cancellationToken);
         }
     }
 }
